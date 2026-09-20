@@ -1,0 +1,44 @@
+{
+  "manifest_version": 3,
+  "name": "Zoho Track",
+  "version": "1.0",
+  "description": "Theo dõi chấm công, nghỉ phép và request trên Zoho People",
+  "permissions": [
+    "storage",
+    "alarms",
+    "cookies",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "https://people.zoho.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": "icon16.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://people.zoho.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "inject.js"
+      ],
+      "matches": [
+        "https://people.zoho.com/*"
+      ]
+    }
+  ]
+}
