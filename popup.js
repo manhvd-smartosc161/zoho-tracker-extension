@@ -291,14 +291,19 @@ document.addEventListener("DOMContentLoaded", function () {
     let requestUsed = 0;
     const leaveDays = [];
 
+    const todayKey = new Date().toDateString();
+
     Object.values(dayList).forEach((day) => {
       const date = new Date(day.orgdate);
       if (date < start || date > end) return;
 
+      // Hôm nay chưa hết ca, chưa biết sẽ đủ giờ hay không
+      const isToday = date.toDateString() === todayKey;
+
       const tsecs = day.tsecs || 0;
       const status = (day.status || "").trim();
 
-      if (tsecs > 0) {
+      if (tsecs > 0 && !isToday) {
         if (tsecs < 6 * 3600) {
           below6.push({
             date,
@@ -324,7 +329,12 @@ document.addEventListener("DOMContentLoaded", function () {
           pillClass: "p-approved",
         });
       }
-      if (status === "Absent" && !day.approvalInfo && !day.leaveDaysTaken) {
+      if (
+        status === "Absent" &&
+        !isToday &&
+        !day.approvalInfo &&
+        !day.leaveDaysTaken
+      ) {
         missingRequest.push({ date, label: "Chưa tạo", pillClass: "p-rejected" });
       }
     });
