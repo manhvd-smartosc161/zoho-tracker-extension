@@ -46,78 +46,55 @@ async function fetchZohoAttendance() {
 
   const url =
     "https://people.zoho.com/hrportal1524046581683/AttendanceViewAction.zp";
-  const requestBody = new URLSearchParams({
-    mode: "getAttList",
-    conreqcsr: csrfToken,
-    loadToday: "false",
-    view: "month",
-    preMonth: "0",
-  });
-
-  const requestBody2 = new URLSearchParams({
-    mode: "getAttList",
-    conreqcsr: csrfToken,
-    loadToday: "false",
-    view: "month",
-    preMonth: "1",
-  });
-
   const headers = {
     Accept: "*/*",
     "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-    "User-Agent":
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36",
     "X-Requested-With": "XMLHttpRequest",
-    Cookie: "people_v5=enabled; _your_other_cookies_here_",
+    Referer: "https://people.zoho.com/hrportal1524046581683/zp",
   };
-  const headers2 = {
-    Accept: "*/*",
-    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-    "User-Agent":
-      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36",
-    "X-Requested-With": "XMLHttpRequest",
-    Cookie: "people_v5=enabled; _your_other_cookies_here_",
-  };
+
   try {
-    const response1 = await fetch(url, {
-      method: "POST",
-      headers: headers,
-      body: requestBody,
-    });
-    const response2 = await fetch(url, {
-      method: "POST",
-      headers: headers2,
-      body: requestBody2,
-    });
+    // 3 tháng để chu kỳ trước (21→20) cũng đủ dữ liệu
+    const months = await Promise.all(
+      [0, 1, 2].map(async (preMonth) => {
+        const response = await fetch(url, {
+          method: "POST",
+          headers,
+          credentials: "include",
+          redirect: "follow",
+          body: new URLSearchParams({
+            mode: "getAttList",
+            conreqcsr: csrfToken,
+            loadToday: "false",
+            view: "month",
+            preMonth: String(preMonth),
+          }),
+        });
+        if (response.redirected && /accounts\.zoho\.com|signin/.test(response.url)) {
+          throw Object.assign(new Error("Zoho chuyển hướng sang trang đăng nhập"), {
+            kind: "SESSION_EXPIRED",
+          });
+        }
+        return assertJsonResponse(await response.text(), response.status);
+      })
+    );
 
-    const dataThisMonth = assertJsonResponse(await response1.text(), response1.status);
-    const dataLastMonth = assertJsonResponse(await response2.text(), response2.status);
+    const [dataThisMonth] = months;
 
-    // Gộp dayList và đánh lại key từ 1 đến hết
+    // Gộp dayList của cả 3 tháng, đánh lại key
     const combinedDayList = {};
+    months
+      .slice()
+      .reverse()
+      .flatMap((m) => Object.values(m.dayList || {}))
+      .forEach((day, index) => {
+        combinedDayList[index] = day;
+      });
 
-    // Lấy dữ liệu từ tháng trước
-    const lastMonthDays = Object.values(dataLastMonth.dayList);
-
-    // Lấy dữ liệu từ tháng này
-    const thisMonthDays = Object.values(dataThisMonth.dayList);
-
-    // Kết hợp tất cả ngày từ tháng trước và tháng này
-    const allDays = [...lastMonthDays, ...thisMonthDays];
-
-    // Đánh lại key từ 1 đến hết
-    allDays.forEach((day, index) => {
-      combinedDayList[index] = day;
-    });
-
-    // Sau khi gộp và đánh lại key, bạn có thể gộp toàn bộ dữ liệu
     const data = {
-      ...dataThisMonth, // Giữ lại tất cả các trường từ tháng này
-      dayList: combinedDayList, // Gộp dayList từ tháng trước và tháng này
-      entries: {
-        ...dataLastMonth.entries, // Gộp entries từ tháng trước
-        ...dataThisMonth.entries, // Gộp entries từ tháng này
-      },
+      ...dataThisMonth,
+      dayList: combinedDayList,
+      entries: Object.assign({}, ...months.map((m) => m.entries || {})),
     };
 
     console.log("Combined data with new dayList:", data);
@@ -142,9 +119,20 @@ async function postZoho(path, params) {
       Accept: "*/*",
       "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
       "X-Requested-With": "XMLHttpRequest",
+      Referer: `${PORTAL}/zp`,
     },
+    credentials: "include",
+    redirect: "follow",
     body: new URLSearchParams(params),
   });
+
+  // Bị đá sang trang đăng nhập -> session hết hạn
+  if (response.redirected && /accounts\.zoho\.com|signin/.test(response.url)) {
+    throw Object.assign(new Error("Zoho chuyển hướng sang trang đăng nhập"), {
+      kind: "SESSION_EXPIRED",
+    });
+  }
+
   return assertJsonResponse(await response.text(), response.status);
 }
 
@@ -199,7 +187,7 @@ async function fetchLeaveRequests() {
     return;
   }
 
-  const { start, end } = getCycleRange(new Date());
+  const { start, end } = getFetchRange(new Date());
   const sDate = formatZohoDate(start);
   const eDate = formatZohoDate(end);
   console.log("🌴 Leave requests: gọi API", sDate, "→", eDate);
@@ -247,7 +235,7 @@ async function fetchZohoRequests() {
     return;
   }
 
-  const { start, end } = getCycleRange(new Date());
+  const { start, end } = getFetchRange(new Date());
   const sDate = formatZohoDate(start);
   const eDate = formatZohoDate(end);
   console.log("📋 Requests: gọi API", sDate, "→", eDate, "erecno:", erecno);
@@ -259,12 +247,15 @@ async function fetchZohoRequests() {
       sDate: sDate,
       eDate: eDate,
       erecno: JSON.stringify([String(erecno)]),
-      statFil: JSON.stringify(["-1"]),
     });
 
-    console.log("📋 Requests raw:", data);
+    const rawCount = (data && data.list && data.list.length) || 0;
     const parsed = parseRequests(data);
-    console.log("📋 Requests parsed:", parsed.length, parsed);
+    console.log(
+      `📋 Requests: API trả ${rawCount} dòng → parse được ${parsed.length}`,
+      parsed.map((r) => `${r.date} ${r.statusText}`)
+    );
+    if (rawCount === 0) console.log("📋 Requests raw (rỗng):", data);
     await chrome.storage.local.set({ requestData: parsed });
   } catch (error) {
     console.error("📋 Requests lỗi:", error);
@@ -342,12 +333,39 @@ function parseLeaveRequests(data, start, end) {
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-function getCycleRange(today) {
-  const anchor = today.getDate() >= 21 ? 0 : -1;
+function getCycleRange(today, offset) {
+  const anchor = (today.getDate() >= 21 ? 0 : -1) + (offset || 0);
   return {
     start: new Date(today.getFullYear(), today.getMonth() + anchor, 21),
     end: new Date(today.getFullYear(), today.getMonth() + anchor + 1, 20),
   };
+}
+
+// Lấy rộng 2 chu kỳ để popup xem được cả tháng trước
+function getFetchRange(today) {
+  return {
+    start: getCycleRange(today, -1).start,
+    end: getCycleRange(today, 0).end,
+  };
+}
+
+async function ensureErecno() {
+  const { erecno, attendanceData } = await chrome.storage.local.get([
+    "erecno",
+    "attendanceData",
+  ]);
+  if (erecno) return erecno;
+
+  // Dữ liệu chấm công có sẵn userDetails.eNo
+  const fromData = attendanceData && attendanceData.userDetails;
+  if (fromData && fromData.eNo) {
+    const value = String(fromData.eNo);
+    await chrome.storage.local.set({ erecno: value });
+    console.log("👤 Lấy erecno từ dữ liệu chấm công:", value);
+    return value;
+  }
+
+  return fetchErecnoFromTab();
 }
 
 // Dự phòng: đọc erecno trực tiếp từ tab Zoho đang mở
@@ -431,8 +449,15 @@ chrome.runtime.onInstalled.addListener(() => {
 // Lấy token từ Cookie Zoho
 async function fetchZohoCSRFToken() {
   try {
-    const cookies = await chrome.cookies.getAll({ domain: "people.zoho.com" });
-    const csrfCookie = cookies.find((cookie) => cookie.name === "CSRF_TOKEN");
+    const groups = await Promise.all([
+      chrome.cookies.getAll({ domain: "people.zoho.com" }),
+      chrome.cookies.getAll({ domain: ".zoho.com" }),
+      chrome.cookies.getAll({ url: "https://people.zoho.com/" }),
+    ]);
+    const cookies = groups.flat();
+    const csrfCookie =
+      cookies.find((c) => c.name === "CSRF_TOKEN") ||
+      cookies.find((c) => c.name === "CT_CSRF_TOKEN");
 
     if (csrfCookie) {
       const csrfToken = csrfCookie.value;
@@ -440,7 +465,12 @@ async function fetchZohoCSRFToken() {
       await chrome.storage.local.set({ csrfToken: csrfToken });
       return csrfToken;
     } else {
-      console.warn("⚠️ CSRF Token not found. Please log in to Zoho.");
+      console.warn(
+        "⚠️ Không thấy CSRF_TOKEN. Tổng cookie tìm được:",
+        cookies.length,
+        "| tên:",
+        [...new Set(cookies.map((c) => c.name))].join(", ") || "(rỗng)"
+      );
       return null;
     }
   } catch (error) {
@@ -489,14 +519,27 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "updateAttendance") {
     (async () => {
       try {
-        await fetchZohoCSRFToken();
-        console.log("▶️ Bắt đầu fetch attendance + leave + requests [v2]");
-        const results = await Promise.allSettled([
-          fetchZohoAttendance(),
+        const token = await fetchZohoCSRFToken();
+        if (!token) {
+          await setStatus("NO_TOKEN");
+          sendResponse({ status: "error", message: "Chưa có CSRF token" });
+          return;
+        }
+
+        console.log("▶️ Bắt đầu fetch [v4]");
+
+        // Attendance trước: response của nó mang userDetails.eNo
+        const attendance = await Promise.allSettled([fetchZohoAttendance()]);
+        const erecno = await ensureErecno();
+        console.log("▶️ erecno:", erecno || "KHÔNG CÓ");
+
+        const rest = await Promise.allSettled([
           fetchZohoLeave(),
           fetchZohoRequests(),
           fetchLeaveRequests(),
         ]);
+
+        const results = [...attendance, ...rest];
         const names = ["attendance", "leave", "requests", "leave-requests"];
         results.forEach((r, i) => {
           if (r.status === "rejected") console.error(`❌ ${names[i]}:`, r.reason);
