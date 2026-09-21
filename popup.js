@@ -4,6 +4,10 @@ const LUNCH_BREAK_MS = 1.25 * 60 * 60 * 1000;
 const CHECKOUT_6H_OFFSET_MS = 7.25 * 60 * 60 * 1000;
 const CHECKOUT_8H_OFFSET_MS = 9.25 * 60 * 60 * 1000;
 const LUNCH_START_HOUR = 12;
+const WORK_START_HOUR = 7;
+const WORK_START_MINUTE = 30;
+const WORK_END_HOUR = 19;
+const WORK_END_MINUTE = 30;
 const LATE_HOUR = 19;
 const LATE_MINUTE = 30;
 const WEEKDAYS = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"];
@@ -30,6 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const pad = (n) => String(n).padStart(2, "0");
   let cachedRequestUsed = 0;
+  let cycleOffset = 0;
 
   function formatTime(date) {
     return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
@@ -66,8 +71,8 @@ document.addEventListener("DOMContentLoaded", function () {
     row.classList.add(`n-${tone}`);
   }
 
-  function getCycle(today) {
-    const anchor = today.getDate() >= 21 ? 0 : -1;
+  function getCycle(today, offset) {
+    const anchor = (today.getDate() >= 21 ? 0 : -1) + (offset || 0);
     return {
       start: new Date(today.getFullYear(), today.getMonth() + anchor, 21),
       end: new Date(today.getFullYear(), today.getMonth() + anchor + 1, 21),
@@ -75,6 +80,18 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   /* ───── Hôm nay ───── */
+
+  function clampToShift(date) {
+    const open = new Date(date);
+    open.setHours(WORK_START_HOUR, WORK_START_MINUTE, 0, 0);
+
+    const close = new Date(date);
+    close.setHours(WORK_END_HOUR, WORK_END_MINUTE, 0, 0);
+
+    if (date < open) return open;
+    if (date > close) return close;
+    return date;
+  }
 
   function workedMsSince(checkin, now) {
     const raw = now - checkin;
@@ -104,12 +121,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const todayEntries = entries && entries[now.toISOString().split("T")[0]];
     if (!todayEntries || todayEntries.length === 0) return resetToday(weekend);
 
-    const checkin = new Date(todayEntries[0].fdate.replace(/-/g, "/"));
-    if (isNaN(checkin.getTime())) return resetToday(weekend);
+    const rawCheckin = new Date(todayEntries[0].fdate.replace(/-/g, "/"));
+    if (isNaN(rawCheckin.getTime())) return resetToday(weekend);
 
+    // Công ty chỉ tính công trong khung 07:30–19:30
+    const checkin = clampToShift(rawCheckin);
     const mark6 = new Date(checkin.getTime() + CHECKOUT_6H_OFFSET_MS);
     const mark8 = new Date(checkin.getTime() + CHECKOUT_8H_OFFSET_MS);
-    const worked = workedMsSince(checkin, now);
+    const worked = workedMsSince(checkin, clampToShift(now));
 
     el("checkin-time").textContent = formatTime(checkin);
     el("checkin-time").classList.remove("muted");
@@ -259,10 +278,12 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function renderCycleStats(dayList) {
-    const { start, end } = getCycle(new Date());
+    const { start, end } = getCycle(new Date(), cycleOffset);
     el("cycle-range").textContent = `${formatDate(start)} → ${formatDate(
       new Date(end.getTime() - 86400000)
     )}`;
+    el("cycle-next").disabled = cycleOffset >= 0;
+    el("cycle-prev").disabled = cycleOffset <= -1;
 
     const below6 = [];
     const between6And8 = [];
@@ -361,6 +382,12 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function renderWorkdaysLeft(end) {
+    if (cycleOffset !== 0) {
+      el("absent-count").textContent = "–";
+      setTone("absent", "info");
+      return;
+    }
+
     const left = countWorkdaysLeft(new Date(), end);
 
     el("absent-count").textContent = left;
@@ -400,8 +427,14 @@ document.addEventListener("DOMContentLoaded", function () {
     return "ok";
   }
 
+  function inCurrentCycle(request) {
+    const { start, end } = getCycle(new Date(), cycleOffset);
+    const date = new Date(`${request.date}T00:00:00`);
+    return date >= start && date < end;
+  }
+
   function renderRequestRow(key, requests, withType, quota) {
-    const rows = requests || [];
+    const rows = (requests || []).filter(inCurrentCycle);
     const pending = rows.filter((r) => r.status === "pending").length;
     const scale = pending > 0 ? `${pending} chờ duyệt` : "đã xử lý xong";
 
@@ -596,5 +629,15 @@ document.addEventListener("DOMContentLoaded", function () {
 
   el("refreshBtn").addEventListener("click", function () {
     requestUpdate();
+  });
+
+  el("cycle-prev").addEventListener("click", function () {
+    cycleOffset = Math.max(-1, cycleOffset - 1);
+    render();
+  });
+
+  el("cycle-next").addEventListener("click", function () {
+    cycleOffset = Math.min(0, cycleOffset + 1);
+    render();
   });
 });

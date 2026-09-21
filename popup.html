@@ -508,8 +508,45 @@
         color: var(--soft);
       }
 
-      .sect .aside {
+      .cycle-nav {
+        display: flex;
+        align-items: center;
+        gap: 2px;
         margin-left: auto;
+      }
+
+      .cycle-nav button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 19px;
+        height: 19px;
+        padding: 0;
+        background: transparent;
+        border: 0;
+        border-radius: 5px;
+        font: inherit;
+        font-size: 14px;
+        line-height: 1;
+        color: var(--soft);
+        cursor: pointer;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .cycle-nav button:hover:not(:disabled) {
+        background: #eae4d8;
+        color: var(--ink);
+      }
+
+      .cycle-nav button:disabled {
+        opacity: 0.28;
+        cursor: default;
+      }
+
+      .sect .aside {
+        min-width: 96px;
+        text-align: center;
         font-size: 11px;
         color: var(--faint);
       }
@@ -963,7 +1000,11 @@
 
     <div class="sect">
       <span class="lbl">Chu kỳ chấm công</span>
-      <span class="aside tnum" id="cycle-range"></span>
+      <span class="cycle-nav">
+        <button id="cycle-prev" type="button" title="Chu kỳ trước" aria-label="Chu kỳ trước">‹</button>
+        <span class="aside tnum" id="cycle-range"></span>
+        <button id="cycle-next" type="button" title="Chu kỳ sau" aria-label="Chu kỳ sau" disabled>›</button>
+      </span>
     </div>
 
     <div class="board">
