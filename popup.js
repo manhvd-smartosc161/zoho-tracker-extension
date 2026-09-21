@@ -479,6 +479,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
   /* ───── Quỹ phép ───── */
 
+  function titleCaseLeave(name) {
+    return String(name || "").replace(/\bleave\b/g, "Leave");
+  }
+
   function makeQuota(name, used, total) {
     const row = document.createElement("div");
     row.className = "quota";
@@ -521,7 +525,9 @@ document.addEventListener("DOMContentLoaded", function () {
       el("leave-aside").textContent = "";
     } else {
       rows.forEach((leave) => {
-        container.appendChild(makeQuota(leave.name, leave.used, leave.total));
+        container.appendChild(
+          makeQuota(titleCaseLeave(leave.name), leave.used, leave.total)
+        );
       });
 
       const annual = rows.find((r) => /annual/i.test(r.name)) || rows[0];
