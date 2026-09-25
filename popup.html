@@ -170,6 +170,34 @@
         color: var(--faint);
       }
 
+      #calendarBtn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 30px;
+        height: 30px;
+        padding: 0;
+        flex-shrink: 0;
+        background: transparent;
+        border: 0;
+        border-radius: 9px;
+        color: var(--soft);
+        cursor: pointer;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      #calendarBtn svg {
+        width: 16px;
+        height: 16px;
+      }
+
+      #calendarBtn:hover,
+      #calendarBtn[aria-pressed="true"] {
+        background: #eae4d8;
+        color: var(--ink);
+      }
+
       #refreshBtn {
         display: flex;
         align-items: center;
@@ -450,16 +478,34 @@
       }
 
       .out {
+        position: relative;
         flex: 1;
         min-width: 0;
         padding: 7px 10px 8px;
         background: var(--paper);
         border-radius: 10px;
+        transition: background 0.25s;
       }
 
       .out .cap {
         font-size: 11px;
         color: var(--soft);
+      }
+
+      .val-row {
+        display: flex;
+        align-items: baseline;
+        gap: 7px;
+      }
+
+      .out .left {
+        font-size: 11px;
+        color: var(--faint);
+        white-space: nowrap;
+      }
+
+      .out.done .left {
+        color: var(--green);
       }
 
       .out .val {
@@ -473,12 +519,48 @@
       }
 
       .out.done {
-        background: var(--green-soft);
+        background: #dcece3;
+        box-shadow: inset 0 0 0 1px #b6d6c6;
       }
 
       .out.done .cap,
       .out.done .val {
         color: var(--green);
+      }
+
+      .out .check {
+        position: absolute;
+        top: 7px;
+        right: 9px;
+        width: 17px;
+        height: 17px;
+        opacity: 0;
+        transform: scale(0.6);
+        transition: opacity 0.2s, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      .out.done .check {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      .out .check circle {
+        fill: var(--green);
+      }
+
+      .out .check path {
+        stroke: #f4f9f6;
+        stroke-width: 2.4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        fill: none;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .out,
+        .out .check {
+          transition: none;
+        }
       }
 
       .late-note {
@@ -845,6 +927,584 @@
         color: var(--soft);
       }
 
+      /* ───── Màn lịch ───── */
+
+      .cal-head {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 3px 8px;
+      }
+
+      .cal-head .lbl {
+        flex: 1;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.11em;
+        text-transform: uppercase;
+        color: var(--soft);
+      }
+
+      .cal-head button {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 19px;
+        height: 19px;
+        padding: 0;
+        background: transparent;
+        border: 0;
+        border-radius: 5px;
+        font: inherit;
+        font-size: 14px;
+        line-height: 1;
+        color: var(--soft);
+        cursor: pointer;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .cal-head button:hover:not(:disabled) {
+        background: #eae4d8;
+        color: var(--ink);
+      }
+
+      .cal-head button:disabled {
+        opacity: 0.28;
+        cursor: default;
+      }
+
+      .cal-head .month {
+        min-width: 108px;
+        text-align: center;
+        font-size: 11px;
+        color: var(--faint);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .cal-sum {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1px;
+        background: var(--line-soft);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 9px;
+      }
+
+      .cal-sum .cell {
+        padding: 8px 9px 9px;
+        background: var(--card);
+      }
+
+      .cal-sum .num {
+        font-family: "SourceSerif", Georgia, serif;
+        font-weight: 600;
+        font-size: 16px;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .cal-sum .cap {
+        margin-top: 4px;
+        font-size: 9px;
+        font-weight: 500;
+        color: var(--soft);
+        line-height: 1.3;
+      }
+
+      .cal-sum .n-ok .num { color: #15803d; }
+      .cal-sum .n-warn .num { color: #c2740a; }
+      .cal-sum .n-bad .num { color: #dc2626; }
+
+      .cal-grid {
+        background: var(--card);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      .cal-wd,
+      .cal-days {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+      }
+
+      .cal-wd {
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .cal-wd div {
+        padding: 6px 0;
+        text-align: center;
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        color: var(--faint);
+      }
+
+      .cal-day {
+        min-height: 46px;
+        padding: 5px 4px 6px;
+        text-align: center;
+        border-right: 1px solid var(--line-soft);
+        border-bottom: 1px solid var(--line-soft);
+      }
+
+      .cal-day:nth-child(7n) {
+        border-right: 0;
+      }
+
+      .cal-day.blank,
+      .cal-day.weekend {
+        background: #faf8f3;
+      }
+
+      .cal-day.h-mid {
+        background: #fdf6e8;
+      }
+
+      .cal-day.h-low,
+      .cal-day.is-absent {
+        background: #fdeced;
+      }
+
+      .cal-day.today {
+        background: var(--green-soft);
+        box-shadow: inset 0 0 0 1.5px var(--green);
+      }
+
+      .cal-day .dnum {
+        font-size: 9px;
+        color: var(--faint);
+        font-variant-numeric: tabular-nums;
+      }
+
+      .cal-day.today .dnum {
+        color: var(--green);
+        font-weight: 600;
+      }
+
+      .cal-day .hrs {
+        margin-top: 4px;
+        font-family: "SourceSerif", Georgia, serif;
+        font-weight: 600;
+        font-size: 12px;
+        line-height: 1;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .cal-day .mark {
+        margin-top: 4px;
+        font-size: 9px;
+        font-weight: 600;
+      }
+
+      .h-full .hrs { color: #15803d; }
+      .h-mid .hrs { color: #c2740a; }
+      .h-low .hrs { color: #dc2626; }
+      .m-leave { color: var(--green); }
+      .m-absent { color: #dc2626; }
+
+      .cal-day.actionable {
+        cursor: pointer;
+        position: relative;
+      }
+
+      .cal-day.actionable:hover {
+        box-shadow: inset 0 0 0 1.5px var(--green);
+      }
+
+      .cal-day.actionable::after {
+        content: "+";
+        position: absolute;
+        top: 3px;
+        right: 4px;
+        font-size: 12px;
+        line-height: 1;
+        color: var(--green);
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
+
+      .cal-day.actionable:hover::after {
+        opacity: 1;
+      }
+
+      .cal-day.has-req {
+        cursor: pointer;
+      }
+
+      .cal-day.has-req::after {
+        content: "×";
+        position: absolute;
+        top: 2px;
+        right: 4px;
+        font-size: 13px;
+        line-height: 1;
+        color: var(--rust);
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
+
+      .cal-day.has-req:hover::after {
+        opacity: 1;
+      }
+
+      .cal-day .req {
+        margin-top: 3px;
+        font-size: 8px;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      }
+
+      .req.r-pending { color: var(--amber); }
+      .req.r-approved { color: var(--green); }
+      .req.r-rejected { color: var(--danger); }
+
+      /* Menu chọn loại request trên ô lịch */
+
+      .cell-menu {
+        position: fixed;
+        z-index: 45;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 158px;
+        padding: 5px;
+        border-radius: 11px;
+        border: 1px solid rgba(42, 39, 35, 0.09);
+        background: var(--card);
+        box-shadow: 0 10px 26px rgba(42, 39, 35, 0.2);
+        opacity: 0;
+        transform: translateY(-4px) scale(0.97);
+        transform-origin: top center;
+        transition: opacity 0.14s ease, transform 0.14s ease;
+      }
+
+      .cell-menu.flip {
+        transform: translateY(4px) scale(0.97);
+        transform-origin: bottom center;
+      }
+
+      .cell-menu.show {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+
+      .cell-menu .cm-head {
+        padding: 5px 9px 3px;
+        font-family: "BeVietnamPro", system-ui, sans-serif;
+        font-size: 10px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+
+      .cell-menu .cm-item {
+        appearance: none;
+        border: 0;
+        background: none;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        width: 100%;
+        padding: 7px 9px;
+        border-radius: 8px;
+        text-align: left;
+        cursor: pointer;
+        font-family: "BeVietnamPro", system-ui, sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--ink);
+        transition: background 0.12s ease;
+      }
+
+      .cell-menu .cm-ico {
+        flex: none;
+        display: grid;
+        place-items: center;
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+      }
+
+      .cell-menu .cm-ico svg {
+        width: 13px;
+        height: 13px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2.1;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .cell-menu .cm-leave .cm-ico {
+        background: rgba(168, 80, 47, 0.13);
+        color: var(--rust);
+      }
+
+      .cell-menu .cm-att .cm-ico {
+        background: rgba(31, 92, 67, 0.13);
+        color: var(--green);
+      }
+
+      .cell-menu .cm-label { display: flex; flex-direction: column; gap: 1px; }
+
+      .cell-menu .cm-sub {
+        font-size: 10px;
+        font-weight: 400;
+        color: var(--muted);
+      }
+
+      .cell-menu .cm-item:hover,
+      .cell-menu .cm-item:focus-visible {
+        outline: none;
+      }
+
+      .cell-menu .cm-leave:hover,
+      .cell-menu .cm-leave:focus-visible {
+        background: rgba(168, 80, 47, 0.09);
+      }
+
+      .cell-menu .cm-att:hover,
+      .cell-menu .cm-att:focus-visible {
+        background: rgba(31, 92, 67, 0.09);
+      }
+
+      .confirm .fields {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 14px 0 4px;
+        padding: 7px 12px;
+        border-radius: 10px;
+        background: var(--paper);
+        border: 1px solid rgba(42, 39, 35, 0.08);
+      }
+
+      .confirm .f-ico {
+        flex: none;
+        display: grid;
+        place-items: center;
+        color: var(--green);
+        opacity: 0.75;
+      }
+
+      .confirm .f-ico svg {
+        width: 15px;
+        height: 15px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .confirm .fields input {
+        flex: 1;
+        min-width: 0;
+        box-sizing: border-box;
+        padding: 3px 4px;
+        border: 0;
+        border-bottom: 1.5px solid transparent;
+        border-radius: 0;
+        background: none;
+        text-align: center;
+        font-family: "SourceSerif", Georgia, serif;
+        font-size: 17px;
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+        color: var(--ink);
+      }
+
+      .confirm .fields input::-webkit-calendar-picker-indicator {
+        opacity: 0;
+        width: 0;
+        margin: 0;
+        padding: 0;
+      }
+
+      .confirm .fields input:hover {
+        border-bottom-color: rgba(42, 39, 35, 0.16);
+      }
+
+      .confirm .fields input:focus {
+        outline: none;
+        border-bottom-color: var(--green);
+      }
+
+      .confirm .f-arrow {
+        flex: none;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      /* Toast báo kết quả */
+
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 14px;
+        transform: translateX(-50%) translateY(6px);
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        max-width: calc(100% - 28px);
+        padding: 8px 14px 8px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(31, 92, 67, 0.18);
+        background: var(--card);
+        color: var(--ink);
+        font-family: "BeVietnamPro", system-ui, sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 1.3;
+        white-space: nowrap;
+        overflow: hidden;
+        box-shadow:
+          0 1px 2px rgba(42, 39, 35, 0.06),
+          0 8px 20px rgba(42, 39, 35, 0.14);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+        z-index: 50;
+      }
+
+      .toast.show {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+
+      .toast span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .toast .ic {
+        flex: none;
+        display: grid;
+        place-items: center;
+        width: 19px;
+        height: 19px;
+        border-radius: 50%;
+        background: var(--green);
+        color: #fffdf9;
+      }
+
+      .toast svg {
+        width: 11px;
+        height: 11px;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2.6;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .toast.is-danger {
+        border-color: rgba(168, 80, 47, 0.22);
+      }
+
+      .toast.is-danger .ic { background: var(--rust); }
+
+      /* Hộp xác nhận */
+
+      .confirm-back {
+        position: fixed;
+        inset: 0;
+        background: rgba(42, 39, 35, 0.34);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 10;
+      }
+
+      .confirm {
+        width: 100%;
+        max-width: 280px;
+        padding: 16px 17px 15px;
+        background: var(--card);
+        border-radius: 14px;
+        box-shadow: 0 12px 32px rgba(42, 39, 35, 0.18);
+      }
+
+      .confirm .ttl {
+        font-family: "SourceSerif", Georgia, serif;
+        font-weight: 600;
+        font-size: 15px;
+        margin-bottom: 6px;
+      }
+
+      .confirm .msg {
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--soft);
+        margin-bottom: 14px;
+      }
+
+      .confirm .msg b {
+        color: var(--ink);
+        font-weight: 600;
+      }
+
+      .confirm .acts {
+        display: flex;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .confirm button {
+        flex: 1;
+        padding: 9px 12px;
+        border: 0;
+        border-radius: 9px;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .confirm .no {
+        background: #eee9e0;
+        color: var(--soft);
+      }
+
+      .confirm .no:hover {
+        background: #e5dfd4;
+      }
+
+      .confirm .yes {
+        background: var(--green);
+        color: #fffdf9;
+      }
+
+      .confirm .yes:hover {
+        background: #1a4d38;
+      }
+
+      .confirm .yes.danger {
+        background: var(--rust);
+      }
+
+      .confirm .yes.danger:hover {
+        background: #8f4227;
+      }
+
+      .confirm button:disabled {
+        opacity: 0.55;
+        cursor: default;
+      }
+
+      .confirm .err {
+        margin-top: 10px;
+        font-size: 11px;
+        color: var(--danger);
+      }
+
       /* ───── Chân trang ───── */
 
       .copyright {
@@ -913,6 +1573,13 @@
         <div class="name">Zoho Track</div>
         <div class="updated" id="last-updated"></div>
       </span>
+      <button id="calendarBtn" type="button" title="Xem lịch tháng" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="5" width="18" height="16" rx="2" />
+          <path d="M3 10h18M8 3v4M16 3v4" />
+        </svg>
+      </button>
       <button id="refreshBtn" type="button" title="Cập nhật dữ liệu">
         <span id="refresh-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
@@ -984,12 +1651,26 @@
 
       <div class="outs">
         <div class="out" id="out-6">
+          <svg class="check" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="11" />
+            <path d="M7 12.4l3.3 3.3L17 9" />
+          </svg>
           <div class="cap">Ra ca đủ 6 tiếng</div>
-          <div class="val serif tnum muted" id="checkout1-time">--:--</div>
+          <div class="val-row">
+            <span class="val serif tnum muted" id="checkout1-time">--:--</span>
+            <span class="left tnum" id="checkout1-left"></span>
+          </div>
         </div>
         <div class="out" id="out-8">
+          <svg class="check" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="11" />
+            <path d="M7 12.4l3.3 3.3L17 9" />
+          </svg>
           <div class="cap">Ra ca đủ 8 tiếng</div>
-          <div class="val serif tnum muted" id="fulltime-time">--:--</div>
+          <div class="val-row">
+            <span class="val serif tnum muted" id="fulltime-time">--:--</span>
+            <span class="left tnum" id="fulltime-left"></span>
+          </div>
         </div>
       </div>
 
@@ -998,74 +1679,126 @@
       </div>
     </div>
 
-    <div class="sect">
-      <span class="lbl">Chu kỳ chấm công</span>
-      <span class="cycle-nav">
-        <button id="cycle-prev" type="button" title="Chu kỳ trước" aria-label="Chu kỳ trước">‹</button>
-        <span class="aside tnum" id="cycle-range"></span>
-        <button id="cycle-next" type="button" title="Chu kỳ sau" aria-label="Chu kỳ sau" disabled>›</button>
-      </span>
+    <div id="cycle-board">
+      <div class="sect">
+        <span class="lbl">Chu kỳ chấm công</span>
+        <span class="cycle-nav">
+          <button id="cycle-prev" type="button" title="Chu kỳ trước" aria-label="Chu kỳ trước">‹</button>
+          <span class="aside tnum" id="cycle-range"></span>
+          <button id="cycle-next" type="button" title="Chu kỳ sau" aria-label="Chu kỳ sau" disabled>›</button>
+        </span>
+      </div>
+
+      <div class="board">
+        <div class="tiles">
+          <button class="tile" id="below-8-row" aria-expanded="false" aria-controls="below-8-detail">
+            <span class="tile-num"
+              ><span id="below-8-count">0</span><span class="flag" id="below-8-flag"></span
+            ></span>
+            <span class="tile-cap">Ngày làm 6–8 tiếng<span class="chev">›</span></span>
+          </button>
+          <button class="tile" id="sent-request-row" aria-expanded="false" aria-controls="sent-request-detail">
+            <span class="tile-num"
+              ><span id="sent-request-count">0</span
+              ><span class="flag" id="sent-request-flag"></span
+            ></span>
+            <span class="tile-cap">Request attendance<span class="chev">›</span></span>
+          </button>
+          <ul class="drawer" id="below-8-detail" hidden></ul>
+          <ul class="drawer" id="sent-request-detail" hidden></ul>
+
+          <button class="tile" id="below-6-row" aria-expanded="false" aria-controls="below-6-detail">
+            <span class="tile-num"
+              ><span id="below-6-count">0</span><span class="flag" id="below-6-flag"></span
+            ></span>
+            <span class="tile-cap">Ngày dưới 6 tiếng<span class="chev">›</span></span>
+          </button>
+          <button class="tile" id="missing-request-row" aria-expanded="false" aria-controls="missing-request-detail">
+            <span class="tile-num"
+              ><span id="missing-request-count">0</span
+              ><span class="flag" id="missing-request-flag"></span
+            ></span>
+            <span class="tile-cap">Vắng mặt chưa xử lý<span class="chev">›</span></span>
+          </button>
+          <ul class="drawer" id="below-6-detail" hidden></ul>
+          <ul class="drawer" id="missing-request-detail" hidden></ul>
+
+          <button class="tile" id="absent-row" aria-expanded="false" aria-controls="absent-detail" data-empty="true">
+            <span class="tile-num"
+              ><span id="absent-count">0</span
+            ></span>
+            <span class="tile-cap">Ngày làm còn lại<span class="chev">›</span></span>
+          </button>
+          <button class="tile" id="leave-request-row" aria-expanded="false" aria-controls="leave-request-detail">
+            <span class="tile-num"
+              ><span id="leave-request-count">0</span
+              ><span class="flag" id="leave-request-flag"></span
+            ></span>
+            <span class="tile-cap">Request leave<span class="chev">›</span></span>
+          </button>
+          <ul class="drawer" id="absent-detail" hidden></ul>
+          <ul class="drawer" id="leave-request-detail" hidden></ul>
+        </div>
+      </div>
+
+      <div class="sect">
+        <span class="lbl">Quỹ ngày phép</span>
+        <span class="aside" id="leave-aside"></span>
+      </div>
+
+      <div class="quotas" id="leave-list"></div>
     </div>
 
-    <div class="board">
-      <div class="tiles">
-        <button class="tile" id="below-8-row" aria-expanded="false" aria-controls="below-8-detail">
-          <span class="tile-num"
-            ><span id="below-8-count">0</span><span class="flag" id="below-8-flag"></span
-          ></span>
-          <span class="tile-cap">Ngày làm 6–8 tiếng<span class="chev">›</span></span>
-        </button>
-        <button class="tile" id="sent-request-row" aria-expanded="false" aria-controls="sent-request-detail">
-          <span class="tile-num"
-            ><span id="sent-request-count">0</span
-            ><span class="flag" id="sent-request-flag"></span
-          ></span>
-          <span class="tile-cap">Request attendance<span class="chev">›</span></span>
-        </button>
-        <ul class="drawer" id="below-8-detail" hidden></ul>
-        <ul class="drawer" id="sent-request-detail" hidden></ul>
+    </div>
 
-        <button class="tile" id="below-6-row" aria-expanded="false" aria-controls="below-6-detail">
-          <span class="tile-num"
-            ><span id="below-6-count">0</span><span class="flag" id="below-6-flag"></span
-          ></span>
-          <span class="tile-cap">Ngày dưới 6 tiếng<span class="chev">›</span></span>
-        </button>
-        <button class="tile" id="missing-request-row" aria-expanded="false" aria-controls="missing-request-detail">
-          <span class="tile-num"
-            ><span id="missing-request-count">0</span
-            ><span class="flag" id="missing-request-flag"></span
-          ></span>
-          <span class="tile-cap">Vắng mặt chưa xử lý<span class="chev">›</span></span>
-        </button>
-        <ul class="drawer" id="below-6-detail" hidden></ul>
-        <ul class="drawer" id="missing-request-detail" hidden></ul>
+    <div id="calendar-view" hidden>
+      <div class="cal-head">
+        <span class="lbl">Lịch chấm công</span>
+        <button id="cal-prev" type="button" title="Tháng trước">‹</button>
+        <span class="month" id="cal-month"></span>
+        <button id="cal-next" type="button" title="Tháng sau">›</button>
+      </div>
 
-        <button class="tile" id="absent-row" aria-expanded="false" aria-controls="absent-detail" data-empty="true">
-          <span class="tile-num"
-            ><span id="absent-count">0</span
-          ></span>
-          <span class="tile-cap">Ngày làm còn lại<span class="chev">›</span></span>
-        </button>
-        <button class="tile" id="leave-request-row" aria-expanded="false" aria-controls="leave-request-detail">
-          <span class="tile-num"
-            ><span id="leave-request-count">0</span
-            ><span class="flag" id="leave-request-flag"></span
-          ></span>
-          <span class="tile-cap">Request leave<span class="chev">›</span></span>
-        </button>
-        <ul class="drawer" id="absent-detail" hidden></ul>
-        <ul class="drawer" id="leave-request-detail" hidden></ul>
+      <div class="cal-sum" id="cal-sum"></div>
+
+      <div class="cal-grid">
+        <div class="cal-wd">
+          <div>T2</div><div>T3</div><div>T4</div><div>T5</div>
+          <div>T6</div><div>T7</div><div>CN</div>
+        </div>
+        <div class="cal-days" id="cal-days"></div>
       </div>
     </div>
 
-    <div class="sect">
-      <span class="lbl">Quỹ ngày phép</span>
-      <span class="aside" id="leave-aside"></span>
+    <div class="confirm-back" id="confirm-back" hidden>
+      <div class="confirm">
+        <div class="ttl" id="confirm-title"></div>
+        <div class="msg" id="confirm-msg"></div>
+        <div class="fields" id="confirm-fields" hidden>
+          <span class="f-ico">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 7v5l3 2M12 3a9 9 0 110 18 9 9 0 010-18z" />
+            </svg>
+          </span>
+          <input id="shift-from" type="time" step="300" value="09:00" aria-label="Giờ vào" />
+          <span class="f-arrow">→</span>
+          <input id="shift-to" type="time" step="300" value="18:30" aria-label="Giờ ra" />
+        </div>
+        <div class="acts">
+          <button class="no" id="confirm-no" type="button">Huỷ bỏ</button>
+          <button class="yes" id="confirm-yes" type="button">Xác nhận</button>
+        </div>
+        <div class="err" id="confirm-err" hidden></div>
+      </div>
     </div>
 
-    <div class="quotas" id="leave-list"></div>
-
+    <div class="toast" id="toast" role="status" aria-live="polite">
+      <span class="ic">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 12.5l4.2 4.2L19 7" />
+        </svg>
+      </span>
+      <span id="toast-text"></span>
     </div>
 
     <div class="copyright">

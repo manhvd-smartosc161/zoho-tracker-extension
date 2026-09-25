@@ -175,6 +175,9 @@ async function fetchLeaveBalance(csrfToken, erecno, leaveTypeId) {
   return { used, balance, total: used + balance };
 }
 
+
+
+
 // Lấy danh sách đơn nghỉ phép trong chu kỳ
 async function fetchLeaveRequests() {
   const { csrfToken, erecno } = await chrome.storage.local.get([
@@ -247,6 +250,7 @@ async function fetchZohoRequests() {
       sDate: sDate,
       eDate: eDate,
       erecno: JSON.stringify([String(erecno)]),
+      statFil: JSON.stringify(["-1"]),
     });
 
     const rawCount = (data && data.list && data.list.length) || 0;
@@ -301,6 +305,9 @@ function parseRequests(data) {
         date: `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`,
         status: normalizeStatus(row.approvalStatus),
         statusText: row.approvalStatus || "",
+        recordId: String(
+          row.recordId || row.regId || row.regDetailsId || ""
+        ),
         inTime: detail.new_intime || "",
         outTime: detail.new_outtime || "",
       };
