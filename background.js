@@ -384,7 +384,11 @@ async function fetchErecnoFromTab() {
     const [result] = await chrome.scripting.executeScript({
       target: { tabId: tabs[0].id },
       world: "MAIN",
-      func: () => ({ erecno: window.erecno, locationId: window._LOGGEDIN_LOCID }),
+      func: () => ({
+        erecno: window.erecno,
+        locationId: window._LOGGEDIN_LOCID,
+        zuid: window.loginUserZUID || window.ZUID || window.zuid,
+      }),
     });
 
     const data = result && result.result;
@@ -393,6 +397,7 @@ async function fetchErecnoFromTab() {
     await chrome.storage.local.set({
       erecno: String(data.erecno),
       locationId: data.locationId ? String(data.locationId) : "",
+      ...(data.zuid ? { zuid: String(data.zuid) } : {}),
     });
     console.log("👤 Identity từ tab:", data.erecno);
     return String(data.erecno);
@@ -468,8 +473,15 @@ async function fetchZohoCSRFToken() {
 
     if (csrfCookie) {
       const csrfToken = csrfCookie.value;
-      console.log("🔑 CSRF Token Retrieved:", csrfToken);
-      await chrome.storage.local.set({ csrfToken: csrfToken });
+      console.log("🔑 CSRF Token Retrieved");
+
+      const wms = cookies.find((c) => c.name === "wms-tkp-token");
+      const zuid = wms && /^(\d+)-/.exec(wms.value);
+
+      await chrome.storage.local.set({
+        csrfToken: csrfToken,
+        ...(zuid ? { zuid: zuid[1] } : {}),
+      });
       return csrfToken;
     } else {
       console.warn(

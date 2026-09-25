@@ -34,6 +34,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const pad = (n) => String(n).padStart(2, "0");
   let cachedRequestUsed = 0;
+  let cachedLeaveTypes = [];
   let cycleOffset = 0;
 
   function formatTime(date) {
@@ -469,10 +470,10 @@ document.addEventListener("DOMContentLoaded", function () {
     const pending = rows.filter((r) => r.status === "pending").length;
     const scale = pending > 0 ? `${pending} chờ duyệt` : "đã xử lý xong";
 
-    const title = `${rows.length} ${withType ? "đơn nghỉ phép" : "request chấm công"}`;
+    const title = `${active.length} ${withType ? "đơn nghỉ phép" : "request chấm công"}`;
 
     if (!quota) {
-      renderRow(key, toPillDays(rows, withType), String(rows.length), "ok", "", {
+      renderRow(key, toPillDays(rows, withType), String(active.length), "ok", "", {
         pill: true,
         scale,
         title,
@@ -566,6 +567,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let calOffset = 0;
   let calDayList = {};
   let calRequests = [];
+  let calLeaveRequests = [];
 
   function calHoursTone(tsecs) {
     if (tsecs >= 8 * 3600) return "h-full";
@@ -637,14 +639,16 @@ document.addEventListener("DOMContentLoaded", function () {
       if (weekend) classes.push("weekend");
       if (key === todayKey) classes.push("today");
 
-      // Một ngày có thể có nhiều đơn (huỷ rồi tạo lại) — ưu tiên đơn còn hiệu lực
       const sameDay = calRequests.filter((r) => r.date === key);
       const request =
         sameDay.find((r) => r.status === "pending") ||
         sameDay.find((r) => r.status === "approved") ||
         sameDay[0];
 
-      // Đơn chờ duyệt phủ lên dữ liệu chấm công: hiện giờ theo đơn, bỏ nhãn Vắng
+      const leaveReq = calLeaveRequests.find(
+        (r) => r.date === key && r.status === "pending"
+      );
+
       const pendingSecs =
         request && request.status === "pending"
           ? requestSeconds(request)
@@ -668,13 +672,18 @@ document.addEventListener("DOMContentLoaded", function () {
           shortDay = true;
         }
       } else if (day && day.leaveDaysTaken) {
-        parts.push(calLine("mark m-leave", day.leaveDaysTaken === 0.5 ? "Nghỉ ½" : "Nghỉ"));
+        parts.push(calLine("mark m-leave", day.leaveDaysTaken === 0.5 ? "Leave\u00a0½" : "Leave"));
+      } else if (leaveReq && !weekend) {
+        parts.push(calLine("mark m-leave", leaveReq.days === 0.5 ? "Leave\u00a0½" : "Leave"));
+        parts.push(calLine("req r-pending", "Chờ duyệt"));
       } else if (day && (day.status || "").trim() === "Absent" && !weekend) {
         parts.push(calLine("mark m-absent", "Vắng"));
         classes.push("is-absent");
         shortDay = true;
         if (!day.approvalInfo) absent++;
       }
+
+      if (leaveReq) shortDay = false;
 
       if (pendingSecs > 0) {
         if (pendingSecs >= 8 * 3600) full++;
@@ -786,7 +795,7 @@ document.addEventListener("DOMContentLoaded", function () {
     return h * 60 + mi;
   }
 
-  function askConfirm({ title, message, confirmText, danger, successText, fields, onConfirm }) {
+  function askConfirm({ title, message, confirmText, danger, successText, fields, leaveFields, onConfirm }) {
     const back = el("confirm-back");
     const yes = el("confirm-yes");
     const no = el("confirm-no");
@@ -798,6 +807,38 @@ document.addEventListener("DOMContentLoaded", function () {
     if (fields) {
       el("shift-from").value = minutesToTime(SHIFT_FROM);
       el("shift-to").value = minutesToTime(SHIFT_TO);
+    }
+
+    el("leave-fields").hidden = !leaveFields;
+    if (leaveFields) {
+      const select = el("leave-type");
+      select.textContent = "";
+      leaveFields.forEach((type) => {
+        const opt = document.createElement("option");
+        opt.value = type.id;
+        const left = Math.max(0, (type.total || 0) - (type.used || 0));
+        const short = titleCaseLeave(type.name).replace(/ ?leave$/i, "");
+        opt.textContent = type.total ? `${short} (${left})` : short;
+        select.appendChild(opt);
+      });
+
+      const duration = el("leave-duration");
+      duration.textContent = "";
+      LEAVE_DURATIONS.forEach((item) => {
+        const opt = document.createElement("option");
+        opt.value = item.value;
+        opt.textContent = item.text;
+        duration.appendChild(opt);
+      });
+
+      const reasonBox = el("leave-reason");
+      reasonBox.value = "";
+      showReasonError(false);
+      reasonBox.oninput = function () {
+        if (this.value.trim()) showReasonError(false);
+      };
+      refreshLeaveTotal();
+      duration.onchange = refreshLeaveTotal;
     }
     yes.textContent = confirmText;
     yes.classList.toggle("danger", Boolean(danger));
@@ -836,6 +877,12 @@ document.addEventListener("DOMContentLoaded", function () {
         yes.disabled = false;
         no.disabled = false;
         yes.textContent = confirmText;
+
+        if (res && res.status === "invalid") {
+          err.hidden = true;
+          return;
+        }
+
         const hints = {
           NO_TOKEN: "Chưa đăng nhập Zoho — đăng nhập rồi thử lại.",
           SESSION_EXPIRED: "Phiên đăng nhập hết hạn — đăng nhập lại Zoho.",
@@ -872,7 +919,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function readCreds() {
     return new Promise((resolve) =>
-      chrome.storage.local.get(["csrfToken", "erecno"], resolve)
+      chrome.storage.local.get(["csrfToken", "erecno", "zuid"], resolve)
     );
   }
 
@@ -988,7 +1035,6 @@ document.addEventListener("DOMContentLoaded", function () {
       .filter(Boolean);
   }
 
-  // "09:00" + "18:15" -> số giây làm việc, đã trừ nghỉ trưa
   function requestSeconds(request) {
     const toMinutes = (text) => {
       const m = /^(\d{1,2}):(\d{2})$/.exec(String(text || "").trim());
@@ -1012,6 +1058,54 @@ document.addEventListener("DOMContentLoaded", function () {
     if (month < 0) return null;
     const d = new Date(Number(parts[2]), month, Number(parts[0]));
     return isNaN(d.getTime()) ? null : d;
+  }
+
+  const LEAVE_FORM_ID = "412762000000035693";
+  const LEAVE_TABLE = "P_EmployeeLeave";
+
+  const LEAVE_DURATIONS = [
+    { value: "full", text: "Cả ngày", days: 1, session: 0 },
+    { value: "half1", text: "Nửa đầu (1st Half)", days: 0.5, session: 1 },
+    { value: "half2", text: "Nửa cuối (2nd Half)", days: 0.5, session: 2 },
+    { value: "q1", text: "1/4 ngày (1st Quarter)", days: 0.25, session: 3 },
+    { value: "q2", text: "1/4 ngày (2nd Quarter)", days: 0.25, session: 4 },
+    { value: "q3", text: "1/4 ngày (3rd Quarter)", days: 0.25, session: 5 },
+    { value: "q4", text: "1/4 ngày (4th Quarter)", days: 0.25, session: 6 },
+  ];
+
+  async function createLeave(dateKey, leaveTypeId, duration, reason) {
+    const { csrfToken, erecno, zuid } = await readCreds();
+    if (!csrfToken) throw new Error("Chưa đăng nhập Zoho.");
+    if (!erecno) throw new Error("Chưa có mã nhân viên — mở people.zoho.com một lần.");
+    if (!leaveTypeId) throw new Error("Chưa chọn loại phép.");
+
+    const spec = LEAVE_DURATIONS.find((d) => d.value === duration) || LEAVE_DURATIONS[0];
+    const zohoDate = toZohoDate(dateKey);
+
+    const body = new URLSearchParams({
+      isPicklistIdEnabled: "true",
+      Employee_ID: String(erecno),
+      Leavetype: String(leaveTypeId),
+      From: zohoDate,
+      To: zohoDate,
+      bereavement_leave_type: "",
+      Reasonforleave: reason || "",
+      zp_tableName: LEAVE_TABLE,
+      conreqcsr: csrfToken,
+      zp_formId: LEAVE_FORM_ID,
+      zp_mode: "addRecord",
+      [zohoDate]: JSON.stringify({ count: 1, session: spec.session }),
+      isHour: "false",
+      isDayBased: "true",
+      Daystaken: String(spec.days),
+      isDraft: "false",
+    });
+
+    if (zuid) body.set("loginUserZUID", String(zuid));
+
+    return postZoho("addUpdateRecord.zp", body, {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    });
   }
 
   async function cancelRequest(recordId) {
@@ -1110,7 +1204,7 @@ document.addEventListener("DOMContentLoaded", function () {
     leave.addEventListener("click", (e) => {
       e.stopPropagation();
       closeCellMenu();
-      showToast("Sắp có");
+      confirmLeave(dateKey, label);
     });
 
     const attendance = menuItem(
@@ -1182,6 +1276,70 @@ document.addEventListener("DOMContentLoaded", function () {
             })
             .catch(() => done(res));
         });
+      },
+    });
+  }
+
+  function showReasonError(show) {
+    el("leave-reason-err").hidden = !show;
+    el("leave-reason").classList.toggle("invalid", Boolean(show));
+  }
+
+  function refreshLeaveTotal() {
+    const spec =
+      LEAVE_DURATIONS.find((d) => d.value === el("leave-duration").value) ||
+      LEAVE_DURATIONS[0];
+    el("leave-total").textContent = `${spec.days} ngày`;
+  }
+
+  function confirmLeave(dateKey, label) {
+    const types = (cachedLeaveTypes || []).filter((t) => t.id);
+    if (types.length === 0) {
+      showToast("Chưa có loại phép — bấm Cập nhật", true);
+      return;
+    }
+
+    askConfirm({
+      title: "Xin nghỉ phép",
+      message: `Đơn nghỉ <b>${label}</b>:`,
+      confirmText: "Gửi đơn",
+      leaveFields: types,
+      successText: `Đã gửi đơn nghỉ ${label}`,
+      onConfirm(done) {
+        const typeId = el("leave-type").value;
+        const duration = el("leave-duration").value;
+        const reason = el("leave-reason").value.trim();
+        if (!typeId) {
+          done({ status: "error", message: "Chưa chọn loại phép." });
+          return;
+        }
+        if (!reason) {
+          showReasonError(true);
+          el("leave-reason").focus();
+          done({ status: "invalid" });
+          return;
+        }
+        showReasonError(false);
+        const spec =
+          LEAVE_DURATIONS.find((d) => d.value === duration) ||
+          LEAVE_DURATIONS[0];
+        runAction(
+          () => createLeave(dateKey, typeId, duration, reason),
+          function (res) {
+            if (res.status !== "success") {
+              done(res);
+              return;
+            }
+            calLeaveRequests = calLeaveRequests.concat({
+              date: dateKey,
+              status: "pending",
+              statusText: "Waiting for approval",
+              days: spec.days,
+            });
+            setTimeout(() => requestUpdate(), 400);
+            done(res);
+          }
+        );
       },
     });
   }
@@ -1271,6 +1429,8 @@ document.addEventListener("DOMContentLoaded", function () {
         const attendance = data.attendanceData;
         calDayList = (attendance && attendance.dayList) || {};
         calRequests = data.requestData || [];
+        cachedLeaveTypes = data.leaveData || [];
+        calLeaveRequests = data.leaveRequestData || [];
         if (attendance && attendance.dayList) renderCycleStats(attendance.dayList);
         else resetCycleStats();
 

@@ -1,6 +1,6 @@
 # Zoho Track
 
-Extension Chrome hiển thị dữ liệu chấm công Zoho People trong một cái liếc: mấy giờ được về, còn bao nhiêu ngày thiếu giờ trong chu kỳ, và còn bao nhiêu phép.
+Extension Chrome hiển thị dữ liệu chấm công Zoho People trong một cái liếc: mấy giờ được về, còn bao nhiêu ngày thiếu giờ trong chu kỳ, và còn bao nhiêu phép. Xem được lịch cả chu kỳ, và tạo đơn chấm công hay đơn nghỉ phép ngay trong popup — không cần mở Zoho.
 
 Không cần cài đặt gì thêm, không cần tài khoản, dữ liệu không rời khỏi trình duyệt. Extension đọc đúng những trang Zoho People mà bạn vốn đã có quyền xem.
 
@@ -89,6 +89,40 @@ Chu kỳ tính từ **ngày 21 tháng này đến ngày 20 tháng sau** — khô
 
 Ô nào có mũi tên `›` thì bấm được, xổ ra danh sách ngày và số giờ cụ thể.
 
+### Lịch chu kỳ
+
+Bấm biểu tượng lịch trên đầu popup để mở lịch cả chu kỳ. Mỗi ô là một ngày, hiện số giờ đã làm.
+
+| Hiển thị | Nghĩa |
+|---|---|
+| Số giờ **xanh** | Đủ 8 tiếng |
+| Số giờ **cam** | 6–8 tiếng |
+| Số giờ **đỏ** | Dưới 6 tiếng |
+| **Vắng** đỏ | Không chấm công, chưa có đơn nào |
+| **Leave** xanh | Nghỉ phép — thêm *Chờ duyệt* nếu đơn chưa được duyệt |
+| **Chờ duyệt** cam | Đơn chấm công đang chờ duyệt |
+
+Dùng `‹` `›` hai bên để xem chu kỳ trước hoặc sau — tiện khi cần kiểm tra đơn đã được duyệt chưa sau khi chu kỳ mới bắt đầu.
+
+Bốn ô trên đầu lịch tóm tắt chu kỳ đang xem: số ngày đủ 8 tiếng, số ngày 6–8 tiếng, số ngày dưới 6 tiếng, và số ngày vắng chưa xử lý. **Ngày hôm nay không được tính vào các con số này** vì ca chưa kết thúc.
+
+### Tạo đơn từ lịch
+
+Bấm vào ô ngày để tạo đơn — không cần mở Zoho.
+
+**Ngày thiếu giờ** (số giờ cam hoặc đỏ): bấm vào mở thẳng đơn chấm công. Giờ vào và giờ ra mặc định **09:00 – 18:30**, sửa được cả hai trước khi gửi.
+
+**Ngày vắng**: bấm vào hiện menu hai lựa chọn.
+
+- **Request Leave** — xin nghỉ phép. Chọn loại phép (kèm số ngày còn lại), thời lượng (cả ngày, nửa đầu, nửa cuối, hoặc một trong bốn phần tư ngày) và nhập lý do. Lý do bắt buộc.
+- **Request Attendance** — đơn chấm công như trên.
+
+Gửi xong ô đổi trạng thái ngay, không cần tải lại. Một thông báo nhỏ hiện lên dưới đáy popup xác nhận.
+
+**Huỷ đơn**: ô đang *Chờ duyệt* bấm vào để huỷ. Đơn đã huỷ không tính vào hạn mức, và ngày đó tạo lại đơn mới được.
+
+Ngày chưa qua thì chưa tạo được đơn — rê chuột vào ô sẽ thấy lý do.
+
 ### Quy ước màu
 
 | Màu | Nghĩa |
@@ -110,6 +144,8 @@ Mỗi loại phép một dòng, hiện số ngày đã dùng trên tổng. Thanh
 **Mở popup là dữ liệu tự cập nhật.** Biểu tượng refresh trên đầu quay trong lúc tải. Bấm vào đó để tải lại bất cứ lúc nào.
 
 **"Phiên đăng nhập đã hết hạn"** nghĩa là Zoho đã đăng xuất bạn. Bấm **Đăng nhập Zoho People**, đăng nhập xong quay lại bấm **Đã đăng nhập — thử lại**.
+
+**Đơn gửi từ extension vẫn cần được duyệt** như đơn tạo trên Zoho. Extension chỉ thay bạn điền form, không tự duyệt.
 
 ---
 
@@ -147,6 +183,8 @@ Mọi thứ chạy cục bộ trong trình duyệt:
 - **Chưa trừ ngày lễ** khỏi "Ngày làm còn lại" — con số này coi mọi ngày trong tuần đều là ngày làm việc
 - Số liệu cập nhật khi mở popup, không chạy liên tục
 - Mốc chu kỳ (21–20) và các hạn mức (5 ngày dưới 8 tiếng, 3 đơn chấm công) đang cố định trong code
+- Đơn nghỉ chỉ tạo được cho **một ngày mỗi lần** — nghỉ nhiều ngày liên tiếp thì tạo từng ngày, hoặc dùng Zoho
+- Huỷ đơn chỉ áp dụng cho **đơn chấm công**; đơn nghỉ phải huỷ trên Zoho
 
 ---
 

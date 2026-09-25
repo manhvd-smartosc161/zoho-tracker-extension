@@ -1102,8 +1102,16 @@
       .h-full .hrs { color: #15803d; }
       .h-mid .hrs { color: #c2740a; }
       .h-low .hrs { color: #dc2626; }
-      .m-leave { color: var(--green); }
       .m-absent { color: #dc2626; }
+
+      .cal-day .m-leave {
+        color: #15803d;
+        font-family: "SourceSerif", Georgia, serif;
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1;
+        white-space: nowrap;
+      }
 
       .cal-day.actionable {
         cursor: pointer;
@@ -1338,6 +1346,96 @@
         flex: none;
         color: var(--muted);
         font-size: 13px;
+      }
+
+      .confirm .lv-fields {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        margin: 14px 0 4px;
+      }
+
+      .confirm .lv-err {
+        margin-top: -2px;
+        padding-left: 2px;
+        font-family: "BeVietnamPro", system-ui, sans-serif;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--danger);
+      }
+
+      .confirm .lv-fields textarea.invalid {
+        border-color: var(--danger);
+      }
+
+      .confirm .lv-fields textarea.invalid:focus {
+        border-color: var(--danger);
+        box-shadow: 0 0 0 2px rgba(198, 40, 40, 0.13);
+      }
+
+      .confirm .lv-total {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        padding: 7px 10px;
+        border-radius: 9px;
+        background: rgba(31, 92, 67, 0.07);
+        font-family: "BeVietnamPro", system-ui, sans-serif;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .confirm .lv-total b {
+        font-family: "SourceSerif", Georgia, serif;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--green);
+      }
+
+      .confirm .lv-fields select,
+      .confirm .lv-fields textarea {
+        box-sizing: border-box;
+        width: 100%;
+        min-width: 0;
+        padding: 8px 10px;
+        border-radius: 9px;
+        border: 1px solid rgba(42, 39, 35, 0.12);
+        background: var(--paper);
+        font-family: "BeVietnamPro", system-ui, sans-serif;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--ink);
+      }
+
+      .confirm .lv-fields textarea {
+        background: #fff;
+        padding: 9px 11px;
+        min-height: 62px;
+        resize: none;
+        line-height: 1.45;
+        font-weight: 400;
+      }
+
+
+      .confirm .lv-fields select {
+        appearance: none;
+        background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a736a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+        background-size: 13px;
+        padding-right: 26px;
+      }
+
+      .confirm .lv-fields textarea::placeholder {
+        color: var(--muted);
+        font-weight: 400;
+      }
+
+      .confirm .lv-fields select:focus,
+      .confirm .lv-fields textarea:focus {
+        outline: none;
+        border-color: var(--green);
+        box-shadow: 0 0 0 2px rgba(31, 92, 67, 0.12);
       }
 
       /* Toast báo kết quả */
@@ -1783,6 +1881,22 @@
           <input id="shift-from" type="time" step="300" value="09:00" aria-label="Giờ vào" />
           <span class="f-arrow">→</span>
           <input id="shift-to" type="time" step="300" value="18:30" aria-label="Giờ ra" />
+        </div>
+        <div class="lv-fields" id="leave-fields" hidden>
+          <select id="leave-type" aria-label="Loại phép"></select>
+          <select id="leave-duration" aria-label="Thời lượng"></select>
+          <textarea
+            id="leave-reason"
+            rows="3"
+            maxlength="200"
+            placeholder="Lý do nghỉ"
+            aria-label="Lý do nghỉ"
+          ></textarea>
+          <div class="lv-err" id="leave-reason-err" hidden>Nhập lý do nghỉ.</div>
+          <div class="lv-total">
+            <span>Tổng</span>
+            <b id="leave-total">1 ngày</b>
+          </div>
         </div>
         <div class="acts">
           <button class="no" id="confirm-no" type="button">Huỷ bỏ</button>
