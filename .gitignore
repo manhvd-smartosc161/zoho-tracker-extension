@@ -1,0 +1,4 @@
+.playwright-mcp/
+.vscode/mcp.json
+cal.png
+.DS_Store
