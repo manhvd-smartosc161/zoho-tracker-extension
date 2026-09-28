@@ -98,6 +98,7 @@
         --card: #fffdf9;
         --line: #e6e0d5;
         --line-soft: #efeae0;
+        --line-grid: rgba(42, 39, 35, 0.07);
         --ink: #2a2723;
         --soft: #6f6a61;
         --faint: #8f887d;
@@ -1076,8 +1077,8 @@
         color: inherit;
         background: transparent;
         border: 0;
-        border-right: 1px solid var(--line-soft);
-        border-bottom: 1px solid var(--line-soft);
+        border-right: 1px solid var(--line-grid);
+        border-bottom: 1px solid var(--line-grid);
         border-radius: 0;
         -webkit-appearance: none;
         appearance: none;
@@ -1105,6 +1106,10 @@
       .cal-day.h-low,
       .cal-day.is-absent {
         background: #fdeced;
+      }
+
+      .cal-day.is-approved {
+        background: var(--green-soft);
       }
 
       .cal-day.today {

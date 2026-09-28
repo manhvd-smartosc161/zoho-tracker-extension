@@ -701,6 +701,7 @@ document.addEventListener("DOMContentLoaded", function () {
       if (request) {
         const info = REQ_LABELS[request.status];
         if (info) parts.push(calLine(`req ${info.cls}`, info.text));
+        if (request.status === "approved" && tsecs >= 8 * 3600) classes.push("is-approved");
       }
 
       // Đơn đã huỷ hoặc bị từ chối không chặn việc tạo lại
