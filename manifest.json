@@ -5,7 +5,6 @@
   "description": "Theo dõi chấm công, nghỉ phép và request trên Zoho People",
   "permissions": [
     "storage",
-    "alarms",
     "cookies",
     "scripting",
     "tabs"
@@ -15,11 +14,12 @@
     "https://accounts.zoho.com/*"
   ],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "src/background/index.js",
+    "type": "module"
   },
   "action": {
-    "default_popup": "popup.html",
-    "default_icon": "icon16.png"
+    "default_popup": "src/popup/popup.html",
+    "default_icon": "assets/icons/icon16.png"
   },
   "content_scripts": [
     {
@@ -27,7 +27,7 @@
         "https://people.zoho.com/*"
       ],
       "js": [
-        "content.js"
+        "src/content/content.js"
       ],
       "run_at": "document_end"
     }
@@ -35,7 +35,7 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "inject.js"
+        "src/content/inject.js"
       ],
       "matches": [
         "https://people.zoho.com/*"
