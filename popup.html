@@ -98,16 +98,21 @@
         --card: #fffdf9;
         --line: #e6e0d5;
         --line-soft: #efeae0;
+        --line-grid: rgba(42, 39, 35, 0.07);
         --ink: #2a2723;
         --soft: #6f6a61;
-        --faint: #9c958a;
+        --faint: #8f887d;
         --green: #1f5c43;
         --green-soft: #e4ede8;
         --green-track: #2f7a5a;
-        --amber: #9a6b30;
+        --amber: #855a25;
         --amber-soft: #f4ece0;
         --rust: #a8502f;
         --danger: #c62828;
+        --info: #6b5b95;
+        --hover: #eae4d8;
+        --fill: #eee9e0;
+        --fill-hover: #e5dfd4;
       }
 
       body {
@@ -115,7 +120,7 @@
           "Segoe UI", sans-serif;
         width: 400px;
         margin: 0;
-        padding: 11px 12px 9px;
+        padding: 11px 12px 6px;
         background: var(--paper);
         color: var(--ink);
         font-size: 13px;
@@ -167,7 +172,16 @@
       header .updated {
         margin-top: 1px;
         font-size: 11px;
-        color: var(--faint);
+        color: var(--soft);
+      }
+
+      header .updated.err {
+        color: var(--rust);
+        font-weight: 500;
+      }
+
+      header h1 {
+        margin: 0;
       }
 
       #calendarBtn {
@@ -194,7 +208,7 @@
 
       #calendarBtn:hover,
       #calendarBtn[aria-pressed="true"] {
-        background: #eae4d8;
+        background: var(--hover);
         color: var(--ink);
       }
 
@@ -230,7 +244,7 @@
       }
 
       #refreshBtn:hover {
-        background: #eae4d8;
+        background: var(--hover);
         color: var(--ink);
       }
 
@@ -383,7 +397,7 @@
       }
 
       .status.off {
-        background: #ebe7de;
+        background: var(--fill);
         color: var(--soft);
       }
 
@@ -407,7 +421,7 @@
         font-weight: 600;
         letter-spacing: 0.09em;
         text-transform: uppercase;
-        color: var(--faint);
+        color: var(--soft);
       }
 
       .stat-value {
@@ -418,7 +432,7 @@
       }
 
       .stat-value.muted {
-        color: #cdc6ba;
+        color: var(--faint);
       }
 
       .stat-value.accent {
@@ -468,7 +482,7 @@
       .hint-row .marks {
         margin-left: auto;
         flex-shrink: 0;
-        color: var(--faint);
+        color: var(--soft);
       }
 
       .outs {
@@ -500,7 +514,7 @@
 
       .out .left {
         font-size: 11px;
-        color: var(--faint);
+        color: var(--soft);
         white-space: nowrap;
       }
 
@@ -515,7 +529,7 @@
       }
 
       .out .val.muted {
-        color: #cdc6ba;
+        color: var(--soft);
       }
 
       .out.done {
@@ -583,6 +597,7 @@
       }
 
       .sect .lbl {
+        margin: 0;
         font-size: 10px;
         font-weight: 600;
         letter-spacing: 0.11em;
@@ -598,15 +613,16 @@
       }
 
       .cycle-nav button {
+        margin: -4px 0;
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 19px;
-        height: 19px;
+        width: 24px;
+        height: 24px;
         padding: 0;
         background: transparent;
         border: 0;
-        border-radius: 5px;
+        border-radius: 6px;
         font: inherit;
         font-size: 14px;
         line-height: 1;
@@ -617,7 +633,7 @@
       }
 
       .cycle-nav button:hover:not(:disabled) {
-        background: #eae4d8;
+        background: var(--hover);
         color: var(--ink);
       }
 
@@ -630,7 +646,7 @@
         min-width: 96px;
         text-align: center;
         font-size: 11px;
-        color: var(--faint);
+        color: var(--soft);
       }
 
       /* ───── Lưới chỉ số ───── */
@@ -650,7 +666,7 @@
       .tile {
         display: block;
         width: 100%;
-        padding: 9px 13px 9px;
+        padding: 8px 13px;
         border: 0;
         border-right: 1px solid var(--line-soft);
         border-bottom: 1px solid var(--line-soft);
@@ -668,18 +684,20 @@
       }
 
       .tile:hover,
-      .tile:focus,
-      .tile:active,
-      .tile:focus-visible {
+      .tile:active {
         background: #faf7f1;
-        outline: none;
       }
 
-      .tile[data-empty="true"] {
+      .tile:focus-visible {
+        outline: 2px solid var(--green);
+        outline-offset: -2px;
+      }
+
+      .tile:disabled {
         cursor: default;
       }
 
-      .tile[data-empty="true"]:hover {
+      .tile:disabled:hover {
         background: transparent;
       }
 
@@ -697,7 +715,7 @@
 
       .tile-num .flag {
         font-size: 12px;
-        color: var(--faint);
+        color: var(--soft);
       }
 
       .tile-cap {
@@ -711,7 +729,7 @@
       }
 
       .tile-cap .chev {
-        color: #c6bfb2;
+        color: var(--faint);
         font-size: 13px;
         transition: transform 0.15s;
       }
@@ -720,7 +738,7 @@
         transform: rotate(90deg);
       }
 
-      .tile[data-empty="true"] .chev {
+      .tile:disabled .chev {
         visibility: hidden;
       }
 
@@ -736,17 +754,17 @@
 
       .n-info .tile-num,
       .n-info .tile-cap {
-        color: #6b5b95;
+        color: var(--info);
       }
 
       .n-warn .tile-num,
       .n-warn .tile-cap {
-        color: #6e7a4f;
+        color: var(--amber);
       }
 
       .n-limit .tile-num,
       .n-limit .tile-cap {
-        color: #9a6236;
+        color: var(--rust);
       }
 
       .n-bad .tile-num,
@@ -787,7 +805,7 @@
         font-weight: 600;
         letter-spacing: 0.08em;
         text-transform: uppercase;
-        color: var(--faint);
+        color: var(--soft);
       }
 
       .drawer li.head .scale {
@@ -822,7 +840,7 @@
       }
 
       .drawer .d-bar > i.low {
-        background: #8a5a30;
+        background: var(--rust);
       }
 
       .drawer .d-val {
@@ -842,8 +860,8 @@
         border-radius: 20px;
         font-size: 11px;
         font-weight: 600;
-        background: #eeeae1;
-        color: var(--soft);
+        background: var(--fill);
+        color: var(--ink);
       }
 
       .drawer .pill.p-pending {
@@ -938,6 +956,7 @@
 
       .cal-head .lbl {
         flex: 1;
+        margin: 0;
         font-size: 10px;
         font-weight: 600;
         letter-spacing: 0.11em;
@@ -946,15 +965,16 @@
       }
 
       .cal-head button {
+        margin: -4px 0;
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 19px;
-        height: 19px;
+        width: 24px;
+        height: 24px;
         padding: 0;
         background: transparent;
         border: 0;
-        border-radius: 5px;
+        border-radius: 6px;
         font: inherit;
         font-size: 14px;
         line-height: 1;
@@ -965,7 +985,7 @@
       }
 
       .cal-head button:hover:not(:disabled) {
-        background: #eae4d8;
+        background: var(--hover);
         color: var(--ink);
       }
 
@@ -978,7 +998,7 @@
         min-width: 108px;
         text-align: center;
         font-size: 11px;
-        color: var(--faint);
+        color: var(--soft);
         font-variant-numeric: tabular-nums;
       }
 
@@ -1000,22 +1020,22 @@
       .cal-sum .num {
         font-family: "SourceSerif", Georgia, serif;
         font-weight: 600;
-        font-size: 16px;
+        font-size: 17px;
         line-height: 1;
         font-variant-numeric: tabular-nums;
       }
 
       .cal-sum .cap {
         margin-top: 4px;
-        font-size: 9px;
+        font-size: 11px;
         font-weight: 500;
         color: var(--soft);
         line-height: 1.3;
       }
 
-      .cal-sum .n-ok .num { color: #15803d; }
-      .cal-sum .n-warn .num { color: #c2740a; }
-      .cal-sum .n-bad .num { color: #dc2626; }
+      .cal-sum .n-ok .num { color: var(--green); }
+      .cal-sum .n-warn .num { color: var(--amber); }
+      .cal-sum .n-bad .num { color: var(--danger); }
 
       .cal-grid {
         background: var(--card);
@@ -1026,7 +1046,7 @@
       .cal-wd,
       .cal-days {
         display: grid;
-        grid-template-columns: repeat(7, 1fr);
+        grid-template-columns: repeat(7, minmax(0, 1fr));
       }
 
       .cal-wd {
@@ -1036,18 +1056,38 @@
       .cal-wd div {
         padding: 6px 0;
         text-align: center;
-        font-size: 9px;
+        font-size: 10px;
         font-weight: 600;
         letter-spacing: 0.06em;
-        color: var(--faint);
+        color: var(--soft);
       }
 
       .cal-day {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        width: 100%;
         min-height: 46px;
+        margin: 0;
         padding: 5px 4px 6px;
         text-align: center;
-        border-right: 1px solid var(--line-soft);
-        border-bottom: 1px solid var(--line-soft);
+        font: inherit;
+        color: inherit;
+        background: transparent;
+        border: 0;
+        border-right: 1px solid var(--line-grid);
+        border-bottom: 1px solid var(--line-grid);
+        border-radius: 0;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .cal-day:focus-visible {
+        z-index: 1;
+        outline: 2px solid var(--green);
+        outline-offset: -2px;
       }
 
       .cal-day:nth-child(7n) {
@@ -1068,14 +1108,18 @@
         background: #fdeced;
       }
 
+      .cal-day.is-approved {
+        background: var(--green-soft);
+      }
+
       .cal-day.today {
         background: var(--green-soft);
         box-shadow: inset 0 0 0 1.5px var(--green);
       }
 
       .cal-day .dnum {
-        font-size: 9px;
-        color: var(--faint);
+        font-size: 11px;
+        color: var(--soft);
         font-variant-numeric: tabular-nums;
       }
 
@@ -1095,17 +1139,17 @@
 
       .cal-day .mark {
         margin-top: 4px;
-        font-size: 9px;
+        font-size: 11px;
         font-weight: 600;
       }
 
-      .h-full .hrs { color: #15803d; }
-      .h-mid .hrs { color: #c2740a; }
-      .h-low .hrs { color: #dc2626; }
-      .m-absent { color: #dc2626; }
+      .h-full .hrs { color: var(--green); }
+      .h-mid .hrs { color: var(--amber); }
+      .h-low .hrs { color: var(--danger); }
+      .m-absent { color: var(--danger); }
 
       .cal-day .m-leave {
-        color: #15803d;
+        color: var(--green);
         font-family: "SourceSerif", Georgia, serif;
         font-size: 11px;
         font-weight: 600;
@@ -1115,7 +1159,6 @@
 
       .cal-day.actionable {
         cursor: pointer;
-        position: relative;
       }
 
       .cal-day.actionable:hover {
@@ -1130,11 +1173,12 @@
         font-size: 12px;
         line-height: 1;
         color: var(--green);
-        opacity: 0;
+        opacity: 0.6;
         transition: opacity 0.15s;
       }
 
-      .cal-day.actionable:hover::after {
+      .cal-day.actionable:hover::after,
+      .cal-day.actionable:focus-visible::after {
         opacity: 1;
       }
 
@@ -1150,19 +1194,21 @@
         font-size: 13px;
         line-height: 1;
         color: var(--rust);
-        opacity: 0;
+        opacity: 0.6;
         transition: opacity 0.15s;
       }
 
-      .cal-day.has-req:hover::after {
+      .cal-day.has-req:hover::after,
+      .cal-day.has-req:focus-visible::after {
         opacity: 1;
       }
 
       .cal-day .req {
         margin-top: 3px;
-        font-size: 8px;
+        font-size: 10px;
         font-weight: 600;
-        letter-spacing: 0.02em;
+        line-height: 1.15;
+        white-space: nowrap;
       }
 
       .req.r-pending { color: var(--amber); }
@@ -1206,7 +1252,7 @@
         font-weight: 600;
         letter-spacing: 0.06em;
         text-transform: uppercase;
-        color: var(--muted);
+        color: var(--soft);
       }
 
       .cell-menu .cm-item {
@@ -1262,20 +1308,29 @@
       .cell-menu .cm-sub {
         font-size: 10px;
         font-weight: 400;
-        color: var(--muted);
+        color: var(--soft);
       }
 
-      .cell-menu .cm-item:hover,
       .cell-menu .cm-item:focus-visible {
-        outline: none;
+        outline: 2px solid var(--green);
+        outline-offset: -2px;
       }
 
-      .cell-menu .cm-leave:hover,
+      .cell-menu .cm-item.is-out .cm-ico {
+        background: var(--fill);
+        color: var(--soft);
+      }
+
+      .cell-menu .cm-item.is-out .cm-sub {
+        color: var(--rust);
+      }
+
+      .cell-menu .cm-leave:hover:not(.is-out),
       .cell-menu .cm-leave:focus-visible {
         background: rgba(168, 80, 47, 0.09);
       }
 
-      .cell-menu .cm-att:hover,
+      .cell-menu .cm-att:hover:not(.is-out),
       .cell-menu .cm-att:focus-visible {
         background: rgba(31, 92, 67, 0.09);
       }
@@ -1315,7 +1370,7 @@
         box-sizing: border-box;
         padding: 3px 4px;
         border: 0;
-        border-bottom: 1.5px solid transparent;
+        border-bottom: 2px solid transparent;
         border-radius: 0;
         background: none;
         text-align: center;
@@ -1337,14 +1392,14 @@
         border-bottom-color: rgba(42, 39, 35, 0.16);
       }
 
-      .confirm .fields input:focus {
+      .confirm .fields input:focus-visible {
         outline: none;
         border-bottom-color: var(--green);
       }
 
       .confirm .f-arrow {
         flex: none;
-        color: var(--muted);
+        color: var(--soft);
         font-size: 13px;
       }
 
@@ -1368,9 +1423,21 @@
         border-color: var(--danger);
       }
 
-      .confirm .lv-fields textarea.invalid:focus {
-        border-color: var(--danger);
-        box-shadow: 0 0 0 2px rgba(198, 40, 40, 0.13);
+      .confirm .lv-fields textarea.invalid:focus-visible {
+        outline-color: var(--danger);
+      }
+
+      .confirm .lv-field {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .confirm .lv-lbl {
+        padding-left: 2px;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--soft);
       }
 
       .confirm .lv-total {
@@ -1382,7 +1449,7 @@
         background: rgba(31, 92, 67, 0.07);
         font-family: "BeVietnamPro", system-ui, sans-serif;
         font-size: 11px;
-        color: var(--muted);
+        color: var(--soft);
       }
 
       .confirm .lv-total b {
@@ -1427,15 +1494,15 @@
       }
 
       .confirm .lv-fields textarea::placeholder {
-        color: var(--muted);
+        color: var(--soft);
         font-weight: 400;
       }
 
-      .confirm .lv-fields select:focus,
-      .confirm .lv-fields textarea:focus {
-        outline: none;
+      .confirm .lv-fields select:focus-visible,
+      .confirm .lv-fields textarea:focus-visible {
+        outline: 2px solid var(--green);
+        outline-offset: 1px;
         border-color: var(--green);
-        box-shadow: 0 0 0 2px rgba(31, 92, 67, 0.12);
       }
 
       /* Toast báo kết quả */
@@ -1448,35 +1515,60 @@
         display: flex;
         align-items: center;
         gap: 9px;
+        width: max-content;
         max-width: calc(100% - 28px);
         padding: 8px 14px 8px 10px;
-        border-radius: 999px;
+        border-radius: 14px;
         border: 1px solid rgba(31, 92, 67, 0.18);
         background: var(--card);
         color: var(--ink);
         font-family: "BeVietnamPro", system-ui, sans-serif;
         font-size: 12px;
         font-weight: 500;
-        line-height: 1.3;
-        white-space: nowrap;
-        overflow: hidden;
+        line-height: 1.4;
         box-shadow:
           0 1px 2px rgba(42, 39, 35, 0.06),
           0 8px 20px rgba(42, 39, 35, 0.14);
         opacity: 0;
         pointer-events: none;
-        transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.2, 0.9, 0.3, 1.2);
+        transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.2, 0, 0, 1);
         z-index: 50;
       }
 
       .toast.show {
         opacity: 1;
         transform: translateX(-50%) translateY(0);
+        pointer-events: auto;
       }
 
-      .toast span {
-        overflow: hidden;
-        text-overflow: ellipsis;
+      .toast #toast-text {
+        min-width: 0;
+        overflow-wrap: break-word;
+      }
+
+      .toast .toast-x {
+        flex: none;
+        display: grid;
+        place-items: center;
+        width: 24px;
+        height: 24px;
+        margin: -4px -8px -4px 0;
+        padding: 0;
+        border: 0;
+        border-radius: 6px;
+        background: transparent;
+        color: var(--soft);
+        font: inherit;
+        font-size: 16px;
+        line-height: 1;
+        cursor: pointer;
+        -webkit-appearance: none;
+        appearance: none;
+      }
+
+      .toast .toast-x:hover {
+        background: var(--hover);
+        color: var(--ink);
       }
 
       .toast .ic {
@@ -1508,31 +1600,31 @@
 
       /* Hộp xác nhận */
 
-      .confirm-back {
-        position: fixed;
-        inset: 0;
-        background: rgba(42, 39, 35, 0.34);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 20px;
-        z-index: 10;
-      }
-
       .confirm {
-        width: 100%;
+        width: calc(100% - 40px);
         max-width: 280px;
-        padding: 16px 17px 15px;
+        padding: 0;
+        border: 0;
+        color: var(--ink);
         background: var(--card);
         border-radius: 14px;
         box-shadow: 0 12px 32px rgba(42, 39, 35, 0.18);
+        overscroll-behavior: contain;
+      }
+
+      .confirm::backdrop {
+        background: rgba(42, 39, 35, 0.34);
+      }
+
+      .confirm-body {
+        padding: 16px 17px 15px;
       }
 
       .confirm .ttl {
+        margin: 0 0 6px;
         font-family: "SourceSerif", Georgia, serif;
         font-weight: 600;
         font-size: 15px;
-        margin-bottom: 6px;
       }
 
       .confirm .msg {
@@ -1562,17 +1654,32 @@
         font-size: 12px;
         font-weight: 600;
         cursor: pointer;
+        transition: transform 0.12s ease-out;
         -webkit-appearance: none;
         appearance: none;
       }
 
+      .confirm button:active:not(:disabled),
+      .lock-btn:active {
+        transform: scale(0.96);
+      }
+
       .confirm .no {
-        background: #eee9e0;
-        color: var(--soft);
+        background: var(--fill);
+        color: var(--ink);
       }
 
       .confirm .no:hover {
-        background: #e5dfd4;
+        background: var(--fill-hover);
+      }
+
+      .confirm .no.primary {
+        background: var(--green);
+        color: #fffdf9;
+      }
+
+      .confirm .no.primary:hover {
+        background: #1a4d38;
       }
 
       .confirm .yes {
@@ -1612,7 +1719,7 @@
         gap: 5px;
         padding: 9px 0 1px;
         font-size: 10px;
-        color: var(--faint);
+        color: var(--soft);
       }
 
       .copyright .slogan {
@@ -1627,7 +1734,10 @@
       .copyright .emoji {
         display: inline-block;
         font-size: 11px;
-        animation: wobble 2.4s ease-in-out infinite;
+      }
+
+      .copyright:hover .emoji {
+        animation: wobble 2.4s ease-in-out;
       }
 
       .copyright .e2 {
@@ -1666,21 +1776,21 @@
 
   <body>
     <header>
-      <span class="logo">🕐</span>
-      <span class="who">
-        <div class="name">Zoho Track</div>
-        <div class="updated" id="last-updated"></div>
-      </span>
-      <button id="calendarBtn" type="button" title="Xem lịch tháng" aria-pressed="false">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+      <span class="logo" aria-hidden="true">🕐</span>
+      <div class="who">
+        <h1 class="name">Zoho Track</h1>
+        <div class="updated" id="last-updated" role="status"></div>
+      </div>
+      <button id="calendarBtn" type="button" title="Xem lịch chấm công" aria-label="Lịch chấm công" aria-pressed="false">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
              stroke-linecap="round" stroke-linejoin="round">
           <rect x="3" y="5" width="18" height="16" rx="2" />
           <path d="M3 10h18M8 3v4M16 3v4" />
         </svg>
       </button>
-      <button id="refreshBtn" type="button" title="Cập nhật dữ liệu">
+      <button id="refreshBtn" type="button" title="Cập nhật dữ liệu" aria-label="Cập nhật dữ liệu">
         <span id="refresh-icon">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
                stroke-linecap="round" stroke-linejoin="round">
             <path d="M21 12a9 9 0 1 1-2.64-6.36" />
             <polyline points="21 3 21 9 15 9" />
@@ -1779,7 +1889,7 @@
 
     <div id="cycle-board">
       <div class="sect">
-        <span class="lbl">Chu kỳ chấm công</span>
+        <h2 class="lbl">Chu kỳ chấm công</h2>
         <span class="cycle-nav">
           <button id="cycle-prev" type="button" title="Chu kỳ trước" aria-label="Chu kỳ trước">‹</button>
           <span class="aside tnum" id="cycle-range"></span>
@@ -1789,13 +1899,13 @@
 
       <div class="board">
         <div class="tiles">
-          <button class="tile" id="below-8-row" aria-expanded="false" aria-controls="below-8-detail">
+          <button class="tile" id="below-8-row" type="button" aria-expanded="false" aria-controls="below-8-detail">
             <span class="tile-num"
               ><span id="below-8-count">0</span><span class="flag" id="below-8-flag"></span
             ></span>
             <span class="tile-cap">Ngày làm 6–8 tiếng<span class="chev">›</span></span>
           </button>
-          <button class="tile" id="sent-request-row" aria-expanded="false" aria-controls="sent-request-detail">
+          <button class="tile" id="sent-request-row" type="button" aria-expanded="false" aria-controls="sent-request-detail">
             <span class="tile-num"
               ><span id="sent-request-count">0</span
               ><span class="flag" id="sent-request-flag"></span
@@ -1805,13 +1915,13 @@
           <ul class="drawer" id="below-8-detail" hidden></ul>
           <ul class="drawer" id="sent-request-detail" hidden></ul>
 
-          <button class="tile" id="below-6-row" aria-expanded="false" aria-controls="below-6-detail">
+          <button class="tile" id="below-6-row" type="button" aria-expanded="false" aria-controls="below-6-detail">
             <span class="tile-num"
               ><span id="below-6-count">0</span><span class="flag" id="below-6-flag"></span
             ></span>
             <span class="tile-cap">Ngày dưới 6 tiếng<span class="chev">›</span></span>
           </button>
-          <button class="tile" id="missing-request-row" aria-expanded="false" aria-controls="missing-request-detail">
+          <button class="tile" id="missing-request-row" type="button" aria-expanded="false" aria-controls="missing-request-detail">
             <span class="tile-num"
               ><span id="missing-request-count">0</span
               ><span class="flag" id="missing-request-flag"></span
@@ -1821,26 +1931,25 @@
           <ul class="drawer" id="below-6-detail" hidden></ul>
           <ul class="drawer" id="missing-request-detail" hidden></ul>
 
-          <button class="tile" id="absent-row" aria-expanded="false" aria-controls="absent-detail" data-empty="true">
+          <button class="tile" id="absent-row" type="button" disabled>
             <span class="tile-num"
               ><span id="absent-count">0</span
             ></span>
-            <span class="tile-cap">Ngày làm còn lại<span class="chev">›</span></span>
+            <span class="tile-cap">Ngày làm còn lại</span>
           </button>
-          <button class="tile" id="leave-request-row" aria-expanded="false" aria-controls="leave-request-detail">
+          <button class="tile" id="leave-request-row" type="button" aria-expanded="false" aria-controls="leave-request-detail">
             <span class="tile-num"
               ><span id="leave-request-count">0</span
               ><span class="flag" id="leave-request-flag"></span
             ></span>
             <span class="tile-cap">Request leave<span class="chev">›</span></span>
           </button>
-          <ul class="drawer" id="absent-detail" hidden></ul>
           <ul class="drawer" id="leave-request-detail" hidden></ul>
         </div>
       </div>
 
       <div class="sect">
-        <span class="lbl">Quỹ ngày phép</span>
+        <h2 class="lbl">Quỹ ngày phép</h2>
         <span class="aside" id="leave-aside"></span>
       </div>
 
@@ -1851,10 +1960,10 @@
 
     <div id="calendar-view" hidden>
       <div class="cal-head">
-        <span class="lbl">Lịch chấm công</span>
-        <button id="cal-prev" type="button" title="Tháng trước">‹</button>
+        <h2 class="lbl">Lịch chấm công</h2>
+        <button id="cal-prev" type="button" title="Chu kỳ trước" aria-label="Chu kỳ trước">‹</button>
         <span class="month" id="cal-month"></span>
-        <button id="cal-next" type="button" title="Tháng sau">›</button>
+        <button id="cal-next" type="button" title="Chu kỳ sau" aria-label="Chu kỳ sau">›</button>
       </div>
 
       <div class="cal-sum" id="cal-sum"></div>
@@ -1868,9 +1977,9 @@
       </div>
     </div>
 
-    <div class="confirm-back" id="confirm-back" hidden>
-      <div class="confirm">
-        <div class="ttl" id="confirm-title"></div>
+    <dialog class="confirm" id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-msg">
+      <div class="confirm-body">
+        <h2 class="ttl" id="confirm-title"></h2>
         <div class="msg" id="confirm-msg"></div>
         <div class="fields" id="confirm-fields" hidden>
           <span class="f-ico">
@@ -1883,28 +1992,38 @@
           <input id="shift-to" type="time" step="300" value="18:30" aria-label="Giờ ra" />
         </div>
         <div class="lv-fields" id="leave-fields" hidden>
-          <select id="leave-type" aria-label="Loại phép"></select>
-          <select id="leave-duration" aria-label="Thời lượng"></select>
-          <textarea
-            id="leave-reason"
-            rows="3"
-            maxlength="200"
-            placeholder="Lý do nghỉ"
-            aria-label="Lý do nghỉ"
-          ></textarea>
-          <div class="lv-err" id="leave-reason-err" hidden>Nhập lý do nghỉ.</div>
+          <label class="lv-field">
+            <span class="lv-lbl">Loại phép</span>
+            <select id="leave-type"></select>
+          </label>
+          <label class="lv-field">
+            <span class="lv-lbl">Thời lượng</span>
+            <select id="leave-duration" aria-describedby="leave-over"></select>
+          </label>
+          <label class="lv-field">
+            <span class="lv-lbl">Lý do</span>
+            <textarea
+              id="leave-reason"
+              rows="3"
+              maxlength="200"
+              placeholder="Ví dụ: việc gia đình"
+              aria-describedby="leave-reason-err"
+            ></textarea>
+          </label>
+          <div class="lv-err" id="leave-reason-err" hidden>Nhập lý do nghỉ để gửi đơn.</div>
+          <div class="lv-err" id="leave-over" role="alert" hidden></div>
           <div class="lv-total">
-            <span>Tổng</span>
+            <span>Tổng<span id="leave-left"></span></span>
             <b id="leave-total">1 ngày</b>
           </div>
         </div>
         <div class="acts">
-          <button class="no" id="confirm-no" type="button">Huỷ bỏ</button>
+          <button class="no" id="confirm-no" type="button">Đóng</button>
           <button class="yes" id="confirm-yes" type="button">Xác nhận</button>
         </div>
-        <div class="err" id="confirm-err" hidden></div>
+        <div class="err" id="confirm-err" role="alert" hidden></div>
       </div>
-    </div>
+    </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite">
       <span class="ic">
@@ -1913,12 +2032,13 @@
         </svg>
       </span>
       <span id="toast-text"></span>
+      <button class="toast-x" id="toast-close" type="button" aria-label="Đóng thông báo" hidden>×</button>
     </div>
 
     <div class="copyright">
-      <span class="emoji e1">☕</span>
-      <span class="emoji e2">💻</span>
-      <span class="emoji e3">🔥</span>
+      <span class="emoji e1" aria-hidden="true">☕</span>
+      <span class="emoji e2" aria-hidden="true">💻</span>
+      <span class="emoji e3" aria-hidden="true">🔥</span>
       <span class="slogan">Work hard, OT harder</span>
       <span class="sep">·</span>
       <span>© Mạnh Vũ Duy (KO)</span>
