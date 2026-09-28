@@ -1,0 +1,92 @@
+/* Toast báo kết quả */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%) translateY(6px);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: max-content;
+  max-width: calc(100% - 28px);
+  padding: 8px 14px 8px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(31, 92, 67, 0.18);
+  background: var(--card);
+  color: var(--ink);
+  font-family: "BeVietnamPro", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.4;
+  box-shadow:
+    0 1px 2px rgba(42, 39, 35, 0.06),
+    0 8px 20px rgba(42, 39, 35, 0.14);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.2, 0, 0, 1);
+  z-index: 50;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+.toast #toast-text {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.toast .toast-x {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin: -4px -8px -4px 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--soft);
+  font: inherit;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.toast .toast-x:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.toast .ic {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  background: var(--green);
+  color: #fffdf9;
+}
+
+.toast svg {
+  width: 11px;
+  height: 11px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.toast.is-danger {
+  border-color: rgba(168, 80, 47, 0.22);
+}
+
+.toast.is-danger .ic { background: var(--rust); }

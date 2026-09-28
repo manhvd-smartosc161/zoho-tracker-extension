@@ -1,0 +1,112 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --paper: #f5f2ec;
+  --card: #fffdf9;
+  --line: #e6e0d5;
+  --line-soft: #efeae0;
+  --line-grid: rgba(42, 39, 35, 0.07);
+  --ink: #2a2723;
+  --soft: #6f6a61;
+  --faint: #8f887d;
+  --green: #1f5c43;
+  --green-soft: #e4ede8;
+  --green-track: #2f7a5a;
+  --amber: #855a25;
+  --amber-soft: #f4ece0;
+  --rust: #a8502f;
+  --danger: #c62828;
+  --info: #6b5b95;
+  --hover: #eae4d8;
+  --fill: #eee9e0;
+  --fill-hover: #e5dfd4;
+}
+
+body {
+  font-family: "BeVietnamPro", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  width: 400px;
+  margin: 0;
+  padding: 11px 12px 6px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 13px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.serif {
+  font-family: "SourceSerif", Georgia, "Times New Roman", serif;
+  font-weight: 600;
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+/* ───── Chân trang ───── */
+
+.copyright {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 9px 0 1px;
+  font-size: 10px;
+  color: var(--soft);
+}
+
+.copyright .slogan {
+  color: var(--soft);
+  font-weight: 500;
+}
+
+.copyright .sep {
+  color: #d2cabc;
+}
+
+.copyright .emoji {
+  display: inline-block;
+  font-size: 11px;
+}
+
+.copyright:hover .emoji {
+  animation: wobble 2.4s ease-in-out;
+}
+
+.copyright .e2 {
+  animation-delay: 0.12s;
+}
+
+.copyright .e3 {
+  animation-delay: 0.24s;
+}
+
+@keyframes wobble {
+  0%,
+  70%,
+  100% {
+    transform: rotate(0) scale(1);
+  }
+  78% {
+    transform: rotate(-14deg) scale(1.18);
+  }
+  86% {
+    transform: rotate(12deg) scale(1.18);
+  }
+  94% {
+    transform: rotate(-6deg) scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

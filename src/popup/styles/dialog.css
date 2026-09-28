@@ -1,0 +1,280 @@
+.confirm .fields {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 14px 0 4px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: var(--paper);
+  border: 1px solid rgba(42, 39, 35, 0.08);
+}
+
+.confirm .f-ico {
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: var(--green);
+  opacity: 0.75;
+}
+
+.confirm .f-ico svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.confirm .fields input {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 3px 4px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  text-align: center;
+  font-family: "SourceSerif", Georgia, serif;
+  font-size: 17px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.confirm .fields input::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  width: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.confirm .fields input:hover {
+  border-bottom-color: rgba(42, 39, 35, 0.16);
+}
+
+.confirm .fields input:focus-visible {
+  outline: none;
+  border-bottom-color: var(--green);
+}
+
+.confirm .f-arrow {
+  flex: none;
+  color: var(--soft);
+  font-size: 13px;
+}
+
+.confirm .lv-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin: 14px 0 4px;
+}
+
+.confirm .lv-err {
+  margin-top: -2px;
+  padding-left: 2px;
+  font-family: "BeVietnamPro", system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--danger);
+}
+
+.confirm .lv-fields textarea.invalid {
+  border-color: var(--danger);
+}
+
+.confirm .lv-fields textarea.invalid:focus-visible {
+  outline-color: var(--danger);
+}
+
+.confirm .lv-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.confirm .lv-lbl {
+  padding-left: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--soft);
+}
+
+.confirm .lv-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  padding: 7px 10px;
+  border-radius: 9px;
+  background: rgba(31, 92, 67, 0.07);
+  font-family: "BeVietnamPro", system-ui, sans-serif;
+  font-size: 11px;
+  color: var(--soft);
+}
+
+.confirm .lv-total b {
+  font-family: "SourceSerif", Georgia, serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--green);
+}
+
+.confirm .lv-fields select,
+.confirm .lv-fields textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 9px;
+  border: 1px solid rgba(42, 39, 35, 0.12);
+  background: var(--paper);
+  font-family: "BeVietnamPro", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.confirm .lv-fields textarea {
+  background: #fff;
+  padding: 9px 11px;
+  min-height: 62px;
+  resize: none;
+  line-height: 1.45;
+  font-weight: 400;
+}
+
+.confirm .lv-fields select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237a736a' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'><path d='M6 9l6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 13px;
+  padding-right: 26px;
+}
+
+.confirm .lv-fields textarea::placeholder {
+  color: var(--soft);
+  font-weight: 400;
+}
+
+.confirm .lv-fields select:focus-visible,
+.confirm .lv-fields textarea:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 1px;
+  border-color: var(--green);
+}
+
+/* Hộp xác nhận */
+
+.confirm {
+  width: calc(100% - 40px);
+  max-width: 280px;
+  padding: 0;
+  border: 0;
+  color: var(--ink);
+  background: var(--card);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(42, 39, 35, 0.18);
+  overscroll-behavior: contain;
+}
+
+.confirm::backdrop {
+  background: rgba(42, 39, 35, 0.34);
+}
+
+.confirm-body {
+  padding: 16px 17px 15px;
+}
+
+.confirm .ttl {
+  margin: 0 0 6px;
+  font-family: "SourceSerif", Georgia, serif;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.confirm .msg {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--soft);
+  margin-bottom: 14px;
+}
+
+.confirm .msg b {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.confirm .acts {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.confirm button {
+  flex: 1;
+  padding: 9px 12px;
+  border: 0;
+  border-radius: 9px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.12s ease-out;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.confirm button:active:not(:disabled),
+.lock-btn:active {
+  transform: scale(0.96);
+}
+
+.confirm .no {
+  background: var(--fill);
+  color: var(--ink);
+}
+
+.confirm .no:hover {
+  background: var(--fill-hover);
+}
+
+.confirm .no.primary {
+  background: var(--green);
+  color: #fffdf9;
+}
+
+.confirm .no.primary:hover {
+  background: #1a4d38;
+}
+
+.confirm .yes {
+  background: var(--green);
+  color: #fffdf9;
+}
+
+.confirm .yes:hover {
+  background: #1a4d38;
+}
+
+.confirm .yes.danger {
+  background: var(--rust);
+}
+
+.confirm .yes.danger:hover {
+  background: #8f4227;
+}
+
+.confirm button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.confirm .err {
+  margin-top: 10px;
+  font-size: 11px;
+  color: var(--danger);
+}

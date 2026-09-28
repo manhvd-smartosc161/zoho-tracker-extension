@@ -169,6 +169,38 @@ Thư mục đã bị di chuyển hoặc xoá. Đặt lại chỗ cũ, hoặc n�
 
 ---
 
+## Cấu trúc mã nguồn
+
+Không cần build: service worker và popup dùng ES modules trực tiếp, nạp thư mục gốc bằng *Load unpacked* là chạy.
+
+```
+manifest.json
+assets/
+  fonts/            Be Vietnam Pro, Source Serif 4 (woff2)
+  icons/
+src/
+  shared/           Dùng chung cho background và popup
+    config.js       Portal Zoho, mốc chu kỳ, hạn mức
+    dates.js        Chu kỳ 21 → 20, định dạng ngày kiểu Zoho
+    zoho-parsers.js Parse danh sách request và đơn nghỉ
+  background/       Service worker
+    index.js        Listener và luồng đồng bộ
+    zoho.js         Gọi API Zoho, nhận biết phiên hết hạn
+    session.js      CSRF token, mã nhân viên, trạng thái lỗi
+    attendance.js · leave.js · requests.js
+  content/          Đọc mã nhân viên từ trang Zoho
+  popup/
+    popup.html · main.js     Khung trang và điểm vào
+    sync.js         Đọc storage, vẽ lại, gọi đồng bộ
+    state.js        Trạng thái dùng chung của popup
+    api.js          Tạo/huỷ request, tạo đơn nghỉ
+    flows.js        Luồng tạo request, xin nghỉ, huỷ
+    quota.js        Hạn mức request, số dư phép
+    views/          Hôm nay, chu kỳ, quỹ phép, lịch, màn khoá
+    ui/             Hộp thoại, form, menu trên ô lịch, toast
+    styles/         CSS tách theo khu vực
+```
+
 ## Quyền riêng tư
 
 Mọi thứ chạy cục bộ trong trình duyệt:

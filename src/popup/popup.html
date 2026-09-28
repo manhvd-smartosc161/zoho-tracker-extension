@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Zoho Track</title>
+    <link rel="stylesheet" href="styles/fonts.css" />
+    <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/header.css" />
+    <link rel="stylesheet" href="styles/overview.css" />
+    <link rel="stylesheet" href="styles/calendar.css" />
+    <link rel="stylesheet" href="styles/dialog.css" />
+    <link rel="stylesheet" href="styles/toast.css" />
+  </head>
+
+  <body>
+    <header>
+      <span class="logo" aria-hidden="true">🕐</span>
+      <div class="who">
+        <h1 class="name">Zoho Track</h1>
+        <div class="updated" id="last-updated" role="status"></div>
+      </div>
+      <button id="calendarBtn" type="button" title="Xem lịch chấm công" aria-label="Lịch chấm công" aria-pressed="false">
+        <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="5" width="18" height="16" rx="2" />
+          <path d="M3 10h18M8 3v4M16 3v4" />
+        </svg>
+      </button>
+      <button id="refreshBtn" type="button" title="Cập nhật dữ liệu" aria-label="Cập nhật dữ liệu">
+        <span id="refresh-icon">
+          <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+            <polyline points="21 3 21 9 15 9" />
+          </svg>
+        </span>
+      </button>
+    </header>
+
+    <div id="lock-screen" hidden>
+      <div class="lock-art" aria-hidden="true">
+        <svg viewBox="0 0 220 150" fill="none">
+          <defs>
+            <pattern id="grid" width="22" height="22" patternUnits="userSpaceOnUse">
+              <path d="M22 0H0V22" stroke="#d9d2c4" stroke-width="1" />
+            </pattern>
+          </defs>
+          <rect width="220" height="150" fill="url(#grid)" opacity=".55" />
+          <circle cx="110" cy="70" r="40" fill="#fffdf9" />
+          <circle cx="110" cy="70" r="40" stroke="#cfc7b6" stroke-width="1.5" />
+          <path d="M110 70V48" stroke="#1f5c43" stroke-width="3.5" stroke-linecap="round" />
+          <path d="M110 70l16 11" stroke="#1f5c43" stroke-width="3.5" stroke-linecap="round" />
+          <circle cx="110" cy="70" r="3.5" fill="#1f5c43" />
+          <rect x="150" y="86" width="34" height="26" rx="5" fill="#fffdf9" stroke="#cfc7b6" stroke-width="1.5" />
+          <path d="M158 86v-7a9 9 0 0 1 18 0v7" stroke="#a8502f" stroke-width="2.6" stroke-linecap="round" />
+          <circle cx="167" cy="98" r="3" fill="#a8502f" />
+        </svg>
+      </div>
+
+      <div class="lock-title">Phiên đăng nhập đã hết hạn</div>
+      <div class="lock-text" id="lock-text">
+        Zoho People đã đăng xuất bạn. Đăng nhập lại để tiếp tục theo dõi chấm công.
+      </div>
+      <a class="lock-btn" href="https://people.zoho.com/" target="_blank">
+        Đăng nhập Zoho People
+      </a>
+      <button class="lock-retry" id="lock-retry" type="button">Đã đăng nhập — thử lại</button>
+    </div>
+
+    <div id="app">
+    <div class="hero" id="hero">
+      <div class="hero-head">
+        <span class="date" id="today-date"></span>
+        <span class="status" id="shift-status">Chưa check-in</span>
+      </div>
+
+      <div class="stats">
+        <div class="stat-block">
+          <div class="stat-label">Giờ vào ca</div>
+          <div class="stat-value serif tnum muted" id="checkin-time">--:--</div>
+        </div>
+        <div class="stat-block right">
+          <div class="stat-label">Đã làm</div>
+          <div class="stat-value serif tnum muted" id="worked-time">0h00</div>
+        </div>
+      </div>
+
+      <div class="split-track">
+        <i><b id="prog-6"></b></i>
+        <i><b id="prog-8"></b></i>
+      </div>
+
+      <div class="hint-row">
+        <span id="progress-hint">Bắt đầu ca để theo dõi tiến độ</span>
+        <span class="marks">mốc 6h · 8h</span>
+      </div>
+
+      <div class="outs">
+        <div class="out" id="out-6">
+          <svg class="check" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="11" />
+            <path d="M7 12.4l3.3 3.3L17 9" />
+          </svg>
+          <div class="cap">Ra ca đủ 6 tiếng</div>
+          <div class="val-row">
+            <span class="val serif tnum muted" id="checkout1-time">--:--</span>
+            <span class="left tnum" id="checkout1-left"></span>
+          </div>
+        </div>
+        <div class="out" id="out-8">
+          <svg class="check" viewBox="0 0 24 24" aria-hidden="true">
+            <circle cx="12" cy="12" r="11" />
+            <path d="M7 12.4l3.3 3.3L17 9" />
+          </svg>
+          <div class="cap">Ra ca đủ 8 tiếng</div>
+          <div class="val-row">
+            <span class="val serif tnum muted" id="fulltime-time">--:--</span>
+            <span class="left tnum" id="fulltime-left"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="late-note" id="late-note" hidden>
+        Mốc 8 tiếng sau 19:30 — hôm nay về muộn.
+      </div>
+    </div>
+
+    <div id="cycle-board">
+      <div class="sect">
+        <h2 class="lbl">Chu kỳ chấm công</h2>
+        <span class="cycle-nav">
+          <button id="cycle-prev" type="button" title="Chu kỳ trước" aria-label="Chu kỳ trước">‹</button>
+          <span class="aside tnum" id="cycle-range"></span>
+          <button id="cycle-next" type="button" title="Chu kỳ sau" aria-label="Chu kỳ sau" disabled>›</button>
+        </span>
+      </div>
+
+      <div class="board">
+        <div class="tiles">
+          <button class="tile" id="below-8-row" type="button" aria-expanded="false" aria-controls="below-8-detail">
+            <span class="tile-num"><span id="below-8-count">0</span></span>
+            <span class="tile-cap">Ngày làm 6–8 tiếng<span class="chev">›</span></span>
+          </button>
+          <button class="tile" id="sent-request-row" type="button" aria-expanded="false" aria-controls="sent-request-detail">
+            <span class="tile-num"><span id="sent-request-count">0</span></span>
+            <span class="tile-cap">Request attendance<span class="chev">›</span></span>
+          </button>
+          <ul class="drawer" id="below-8-detail" hidden></ul>
+          <ul class="drawer" id="sent-request-detail" hidden></ul>
+
+          <button class="tile" id="below-6-row" type="button" aria-expanded="false" aria-controls="below-6-detail">
+            <span class="tile-num"><span id="below-6-count">0</span></span>
+            <span class="tile-cap">Ngày dưới 6 tiếng<span class="chev">›</span></span>
+          </button>
+          <button class="tile" id="missing-request-row" type="button" aria-expanded="false" aria-controls="missing-request-detail">
+            <span class="tile-num"><span id="missing-request-count">0</span></span>
+            <span class="tile-cap">Vắng mặt chưa xử lý<span class="chev">›</span></span>
+          </button>
+          <ul class="drawer" id="below-6-detail" hidden></ul>
+          <ul class="drawer" id="missing-request-detail" hidden></ul>
+
+          <button class="tile" id="absent-row" type="button" disabled>
+            <span class="tile-num"><span id="absent-count">0</span></span>
+            <span class="tile-cap">Ngày làm còn lại</span>
+          </button>
+          <button class="tile" id="leave-request-row" type="button" aria-expanded="false" aria-controls="leave-request-detail">
+            <span class="tile-num"><span id="leave-request-count">0</span></span>
+            <span class="tile-cap">Request leave<span class="chev">›</span></span>
+          </button>
+          <ul class="drawer" id="leave-request-detail" hidden></ul>
+        </div>
+      </div>
+
+      <div class="sect">
+        <h2 class="lbl">Quỹ ngày phép</h2>
+        <span class="aside" id="leave-aside"></span>
+      </div>
+
+      <div class="quotas" id="leave-list"></div>
+    </div>
+
+    </div>
+
+    <div id="calendar-view" hidden>
+      <div class="cal-head">
+        <h2 class="lbl">Lịch chấm công</h2>
+        <button id="cal-prev" type="button" title="Chu kỳ trước" aria-label="Chu kỳ trước">‹</button>
+        <span class="month" id="cal-month"></span>
+        <button id="cal-next" type="button" title="Chu kỳ sau" aria-label="Chu kỳ sau">›</button>
+      </div>
+
+      <div class="cal-sum" id="cal-sum"></div>
+
+      <div class="cal-grid">
+        <div class="cal-wd">
+          <div>T2</div><div>T3</div><div>T4</div><div>T5</div>
+          <div>T6</div><div>T7</div><div>CN</div>
+        </div>
+        <div class="cal-days" id="cal-days"></div>
+      </div>
+    </div>
+
+    <dialog class="confirm" id="confirm-dialog" aria-labelledby="confirm-title" aria-describedby="confirm-msg">
+      <div class="confirm-body">
+        <h2 class="ttl" id="confirm-title"></h2>
+        <div class="msg" id="confirm-msg"></div>
+        <div class="fields" id="confirm-fields" hidden>
+          <span class="f-ico">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 7v5l3 2M12 3a9 9 0 110 18 9 9 0 010-18z" />
+            </svg>
+          </span>
+          <input id="shift-from" type="time" step="300" value="09:00" aria-label="Giờ vào" />
+          <span class="f-arrow">→</span>
+          <input id="shift-to" type="time" step="300" value="18:30" aria-label="Giờ ra" />
+        </div>
+        <div class="lv-fields" id="leave-fields" hidden>
+          <label class="lv-field">
+            <span class="lv-lbl">Loại phép</span>
+            <select id="leave-type"></select>
+          </label>
+          <label class="lv-field">
+            <span class="lv-lbl">Thời lượng</span>
+            <select id="leave-duration" aria-describedby="leave-over"></select>
+          </label>
+          <label class="lv-field">
+            <span class="lv-lbl">Lý do</span>
+            <textarea
+              id="leave-reason"
+              rows="3"
+              maxlength="200"
+              placeholder="Ví dụ: việc gia đình"
+              aria-describedby="leave-reason-err"
+            ></textarea>
+          </label>
+          <div class="lv-err" id="leave-reason-err" hidden>Nhập lý do nghỉ để gửi đơn.</div>
+          <div class="lv-err" id="leave-over" role="alert" hidden></div>
+          <div class="lv-total">
+            <span>Tổng<span id="leave-left"></span></span>
+            <b id="leave-total">1 ngày</b>
+          </div>
+        </div>
+        <div class="acts">
+          <button class="no" id="confirm-no" type="button">Đóng</button>
+          <button class="yes" id="confirm-yes" type="button">Xác nhận</button>
+        </div>
+        <div class="err" id="confirm-err" role="alert" hidden></div>
+      </div>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite">
+      <span class="ic">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 12.5l4.2 4.2L19 7" />
+        </svg>
+      </span>
+      <span id="toast-text"></span>
+      <button class="toast-x" id="toast-close" type="button" aria-label="Đóng thông báo" hidden>×</button>
+    </div>
+
+    <div class="copyright">
+      <span class="emoji e1" aria-hidden="true">☕</span>
+      <span class="emoji e2" aria-hidden="true">💻</span>
+      <span class="emoji e3" aria-hidden="true">🔥</span>
+      <span class="slogan">Work hard, OT harder</span>
+      <span class="sep">·</span>
+      <span>© Mạnh Vũ Duy (KO)</span>
+    </div>
+
+    <script type="module" src="main.js"></script>
+  </body>
+</html>

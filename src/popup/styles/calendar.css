@@ -1,0 +1,389 @@
+/* ───── Màn lịch ───── */
+
+.cal-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 3px 8px;
+}
+
+.cal-head .lbl {
+  flex: 1;
+  margin: 0;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+
+.cal-head button {
+  margin: -4px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--soft);
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.cal-head button:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.cal-head button:disabled {
+  opacity: 0.28;
+  cursor: default;
+}
+
+.cal-head .month {
+  min-width: 108px;
+  text-align: center;
+  font-size: 11px;
+  color: var(--soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-sum {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--line-soft);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 9px;
+}
+
+.cal-sum .cell {
+  padding: 8px 9px 9px;
+  background: var(--card);
+}
+
+.cal-sum .num {
+  font-family: "SourceSerif", Georgia, serif;
+  font-weight: 600;
+  font-size: 17px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-sum .cap {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--soft);
+  line-height: 1.3;
+}
+
+.cal-sum .n-ok .num { color: var(--green); }
+.cal-sum .n-warn .num { color: var(--amber); }
+.cal-sum .n-bad .num { color: var(--danger); }
+
+.cal-grid {
+  background: var(--card);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.cal-wd,
+.cal-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.cal-wd {
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.cal-wd div {
+  padding: 6px 0;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--soft);
+}
+
+.cal-day {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+  min-height: 46px;
+  margin: 0;
+  padding: 5px 4px 6px;
+  text-align: center;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: 0;
+  border-right: 1px solid var(--line-grid);
+  border-bottom: 1px solid var(--line-grid);
+  border-radius: 0;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.cal-day:focus-visible {
+  z-index: 1;
+  outline: 2px solid var(--green);
+  outline-offset: -2px;
+}
+
+.cal-day:nth-child(7n) {
+  border-right: 0;
+}
+
+.cal-day.blank,
+.cal-day.weekend {
+  background: #faf8f3;
+}
+
+.cal-day.h-mid {
+  background: #fdf6e8;
+}
+
+.cal-day.h-low,
+.cal-day.is-absent {
+  background: #fdeced;
+}
+
+.cal-day.is-approved {
+  background: var(--green-soft);
+}
+
+.cal-day.today {
+  background: var(--green-soft);
+  box-shadow: inset 0 0 0 1.5px var(--green);
+}
+
+.cal-day .dnum {
+  font-size: 11px;
+  color: var(--soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-day.today .dnum {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.cal-day .hrs {
+  margin-top: 4px;
+  font-family: "SourceSerif", Georgia, serif;
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.cal-day .mark {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.h-full .hrs { color: var(--green); }
+.h-mid .hrs { color: var(--amber); }
+.h-low .hrs { color: var(--danger); }
+.m-absent { color: var(--danger); }
+
+.cal-day .m-leave {
+  color: var(--green);
+  font-family: "SourceSerif", Georgia, serif;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.cal-day.actionable {
+  cursor: pointer;
+}
+
+.cal-day.actionable:hover {
+  box-shadow: inset 0 0 0 1.5px var(--green);
+}
+
+.cal-day.actionable::after {
+  content: "+";
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--green);
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.cal-day.actionable:hover::after,
+.cal-day.actionable:focus-visible::after {
+  opacity: 1;
+}
+
+.cal-day.has-req {
+  cursor: pointer;
+}
+
+.cal-day.has-req::after {
+  content: "×";
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--rust);
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.cal-day.has-req:hover::after,
+.cal-day.has-req:focus-visible::after {
+  opacity: 1;
+}
+
+.cal-day .req {
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.req.r-pending { color: var(--amber); }
+.req.r-approved { color: var(--green); }
+.req.r-rejected { color: var(--danger); }
+
+/* Menu chọn loại request trên ô lịch */
+
+.cell-menu {
+  position: fixed;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 158px;
+  padding: 5px;
+  border-radius: 11px;
+  border: 1px solid rgba(42, 39, 35, 0.09);
+  background: var(--card);
+  box-shadow: 0 10px 26px rgba(42, 39, 35, 0.2);
+  opacity: 0;
+  transform: translateY(-4px) scale(0.97);
+  transform-origin: top center;
+  transition: opacity 0.14s ease, transform 0.14s ease;
+}
+
+.cell-menu.flip {
+  transform: translateY(4px) scale(0.97);
+  transform-origin: bottom center;
+}
+
+.cell-menu.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.cell-menu .cm-head {
+  padding: 5px 9px 3px;
+  font-family: "BeVietnamPro", system-ui, sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+
+.cell-menu .cm-item {
+  appearance: none;
+  border: 0;
+  background: none;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  padding: 7px 9px;
+  border-radius: 8px;
+  text-align: left;
+  cursor: pointer;
+  font-family: "BeVietnamPro", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink);
+  transition: background 0.12s ease;
+}
+
+.cell-menu .cm-ico {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+}
+
+.cell-menu .cm-ico svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.1;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.cell-menu .cm-leave .cm-ico {
+  background: rgba(168, 80, 47, 0.13);
+  color: var(--rust);
+}
+
+.cell-menu .cm-att .cm-ico {
+  background: rgba(31, 92, 67, 0.13);
+  color: var(--green);
+}
+
+.cell-menu .cm-label { display: flex; flex-direction: column; gap: 1px; }
+
+.cell-menu .cm-sub {
+  font-size: 10px;
+  font-weight: 400;
+  color: var(--soft);
+}
+
+.cell-menu .cm-item:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: -2px;
+}
+
+.cell-menu .cm-item.is-out .cm-ico {
+  background: var(--fill);
+  color: var(--soft);
+}
+
+.cell-menu .cm-item.is-out .cm-sub {
+  color: var(--rust);
+}
+
+.cell-menu .cm-leave:hover:not(.is-out),
+.cell-menu .cm-leave:focus-visible {
+  background: rgba(168, 80, 47, 0.09);
+}
+
+.cell-menu .cm-att:hover:not(.is-out),
+.cell-menu .cm-att:focus-visible {
+  background: rgba(31, 92, 67, 0.09);
+}
