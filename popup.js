@@ -677,7 +677,7 @@ document.addEventListener("DOMContentLoaded", function () {
         parts.push(calLine("mark m-leave", day.leaveDaysTaken === 0.5 ? "Leave\u00a0½" : "Leave"));
       } else if (leaveReq && !weekend) {
         parts.push(calLine("mark m-leave", leaveReq.days === 0.5 ? "Leave\u00a0½" : "Leave"));
-        parts.push(calLine("req r-pending", "Chờ duyệt"));
+        parts.push(calLine("req r-pending", "Chờ"));
       } else if (day && (day.status || "").trim() === "Absent" && !weekend) {
         parts.push(calLine("mark m-absent", "Vắng"));
         classes.push("is-absent");
@@ -782,8 +782,8 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   const REQ_LABELS = {
-    pending: { text: "Chờ duyệt", cls: "r-pending" },
-    approved: { text: "Đã duyệt", cls: "r-approved" },
+    pending: { text: "Chờ", cls: "r-pending" },
+    approved: { text: "Duyệt", cls: "r-approved" },
     rejected: { text: "Từ chối", cls: "r-rejected" },
   };
 
@@ -822,7 +822,7 @@ document.addEventListener("DOMContentLoaded", function () {
     return h * 60 + mi;
   }
 
-  function askConfirm({ title, message, confirmText, cancelText, danger, successText, fields, leaveFields, returnKey, onConfirm }) {
+  function askConfirm({ title, message, confirmText, cancelText, danger, successText, fields, leaveFields, returnKey, notice, onConfirm }) {
     const dialog = el("confirm-dialog");
     const opener = document.activeElement;
     let busy = false;
@@ -845,11 +845,13 @@ document.addEventListener("DOMContentLoaded", function () {
       leaveFields.forEach((type) => {
         const opt = document.createElement("option");
         opt.value = type.id;
-        const left = Math.max(0, (type.total || 0) - (type.used || 0));
-        const short = titleCaseLeave(type.name).replace(/ ?leave$/i, "");
-        opt.textContent = type.total ? `${short} (${left})` : short;
+        const left = leaveLeft(type);
+        opt.textContent = left > 0 ? `${leaveShortName(type)} (còn ${left})` : `${leaveShortName(type)} (hết)`;
+        opt.disabled = left <= 0;
         select.appendChild(opt);
       });
+      const firstOpen = leaveFields.find((type) => leaveLeft(type) > 0);
+      if (firstOpen) select.value = firstOpen.id;
 
       const duration = el("leave-duration");
       duration.textContent = "";
@@ -859,6 +861,11 @@ document.addEventListener("DOMContentLoaded", function () {
         opt.textContent = item.text;
         duration.appendChild(opt);
       });
+      fitLeaveDuration();
+      select.onchange = function () {
+        fitLeaveDuration();
+        refreshLeaveTotal();
+      };
 
       const reasonBox = el("leave-reason");
       reasonBox.value = "";
@@ -869,8 +876,10 @@ document.addEventListener("DOMContentLoaded", function () {
       refreshLeaveTotal();
       duration.onchange = refreshLeaveTotal;
     }
-    yes.textContent = confirmText;
+    yes.textContent = confirmText || "";
+    yes.hidden = Boolean(notice);
     no.textContent = cancelText || "Đóng";
+    no.classList.toggle("primary", Boolean(notice));
     yes.classList.toggle("danger", Boolean(danger));
     yes.disabled = false;
     no.disabled = false;
@@ -1222,10 +1231,10 @@ document.addEventListener("DOMContentLoaded", function () {
     items[(index + step + items.length) % items.length].focus();
   }
 
-  function menuItem(cls, iconPath, title, sub) {
+  function menuItem(cls, iconPath, title, sub, state) {
     const btn = document.createElement("button");
     btn.type = "button";
-    btn.className = `cm-item ${cls}`;
+    btn.className = `cm-item ${cls} ${state || ""}`.trim();
     btn.setAttribute("role", "menuitem");
 
     const ico = document.createElement("span");
@@ -1263,11 +1272,16 @@ document.addEventListener("DOMContentLoaded", function () {
     head.textContent = label;
     menu.appendChild(head);
 
+    const leaveOut = leaveExhausted();
+    const quota = attendanceQuota(dateKey);
+    const attendanceOut = quota.left <= 0;
+
     const leave = menuItem(
       "cm-leave",
       "M8 3v3M16 3v3M4 9h16M5 6h14a1 1 0 011 1v12a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1z",
       "Request leave",
-      "Xin nghỉ phép"
+      leaveOut ? "Đã hết ngày phép năm nay" : "Xin nghỉ phép",
+      leaveOut ? "is-out" : ""
     );
     leave.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -1279,7 +1293,10 @@ document.addEventListener("DOMContentLoaded", function () {
       "cm-att",
       "M12 7v5l3 2M12 3a9 9 0 110 18 9 9 0 010-18z",
       "Request attendance",
-      "Bổ sung chấm công"
+      attendanceOut
+        ? `Đã hết ${ATTENDANCE_REQUEST_QUOTA} request chu kỳ này`
+        : `Bổ sung chấm công · còn ${quota.left}/${ATTENDANCE_REQUEST_QUOTA}`,
+      attendanceOut ? "is-out" : ""
     );
     attendance.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -1309,13 +1326,109 @@ document.addEventListener("DOMContentLoaded", function () {
     document.addEventListener("click", onDocClick, true);
     document.addEventListener("keydown", onMenuKey, true);
     window.addEventListener("scroll", closeCellMenu, true);
-    leave.focus();
+    (menu.querySelector(".cm-item:not(.is-out)") || leave).focus();
+  }
+
+  function attendanceQuota(dateKey) {
+    const { start, end } = getCycle(new Date(`${dateKey}T00:00:00`), 0);
+    const usedDays = calRequests
+      .filter((request) => {
+        const date = new Date(`${request.date}T00:00:00`);
+        return date >= start && date < end && countsAgainstQuota(request);
+      })
+      .map((request) => request.date)
+      .sort();
+    const used = usedDays.length;
+    return {
+      used,
+      usedDays,
+      left: Math.max(0, ATTENDANCE_REQUEST_QUOTA - used),
+      range: `${formatDate(start)} → ${formatDate(new Date(end.getTime() - 86400000))}`,
+      nextStart: formatDate(end),
+    };
+  }
+
+  function mergeRequests(requests, dayList) {
+    const merged = (requests || []).slice();
+    const taken = new Set(
+      merged.filter(countsAgainstQuota).map((request) => request.date)
+    );
+    Object.values(dayList || {}).forEach((day) => {
+      const info = day.approvalInfo;
+      if (!info || info.isRegularized === false) return;
+      const date = parseZohoDay(info.originday) || new Date(day.orgdate);
+      if (!date || isNaN(date.getTime())) return;
+      const key = dateKeyOf(date);
+      if (taken.has(key)) return;
+      taken.add(key);
+      const clock = (text) => (/(\d{1,2}:\d{2})\s*$/.exec(String(text || "")) || [])[1] || "";
+      merged.push({
+        date: key,
+        status: "approved",
+        statusText: "Approved",
+        recordId: String(info.recordId || info.regDetailsId || ""),
+        inTime: clock(info.new_intime),
+        outTime: clock(info.new_outtime),
+      });
+    });
+    return merged.sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  function showNotice(title, message, returnKey) {
+    askConfirm({
+      title,
+      message,
+      notice: true,
+      cancelText: "Đã hiểu",
+      returnKey,
+      onConfirm() {},
+    });
+  }
+
+  function leaveLeft(type) {
+    const left = Number.isFinite(type.balance)
+      ? type.balance
+      : (type.total || 0) - (type.used || 0);
+    return Math.max(0, left);
+  }
+
+  function leaveShortName(type) {
+    return titleCaseLeave(type.name).replace(/ ?leave$/i, "");
+  }
+
+  function leaveTypes() {
+    return (cachedLeaveTypes || []).filter((t) => t.id);
+  }
+
+  function leaveExhausted() {
+    const types = leaveTypes();
+    return types.length > 0 && types.every((type) => leaveLeft(type) <= 0);
+  }
+
+  function selectedLeaveType() {
+    const id = el("leave-type").value;
+    return leaveTypes().find((type) => String(type.id) === String(id)) || null;
   }
 
   function confirmCreate(dateKey, label) {
+    const quota = attendanceQuota(dateKey);
+    if (quota.left <= 0) {
+      const days = quota.usedDays
+        .map((key) => formatDate(new Date(`${key}T00:00:00`)))
+        .join(", ");
+      showNotice(
+        "Đã hết request chấm công",
+        `Chu kỳ <b>${quota.range}</b> đã dùng <b>${quota.used}/${ATTENDANCE_REQUEST_QUOTA}</b> request (${days}). Không tạo thêm được cho <b>${label}</b>.<br>Hạn mức mới bắt đầu từ ${quota.nextStart}.`,
+        dateKey
+      );
+      return;
+    }
+
+    const quotaNote = `<br>Còn <b>${quota.left}/${ATTENDANCE_REQUEST_QUOTA}</b> request trong chu kỳ ${quota.range}.`;
+
     askConfirm({
       title: "Tạo request chấm công",
-      message: `Tạo request cho <b>${label}</b>, ca làm:`,
+      message: `Tạo request cho <b>${label}</b>, ca làm:${quotaNote}`,
       fields: true,
       confirmText: "Tạo request",
       successText: `Đã tạo request ${label}`,
@@ -1340,7 +1453,7 @@ document.addEventListener("DOMContentLoaded", function () {
           // Lấy lại danh sách để có mã đơn thật
           fetchRequestList()
             .then((list) => {
-              if (list) calRequests = list;
+              if (list) calRequests = mergeRequests(list, calDayList);
               done(res);
             })
             .catch(() => done(res));
@@ -1355,18 +1468,48 @@ document.addEventListener("DOMContentLoaded", function () {
     el("leave-reason").setAttribute("aria-invalid", String(Boolean(show)));
   }
 
+  function fitLeaveDuration() {
+    const type = selectedLeaveType();
+    const duration = el("leave-duration");
+    const current = LEAVE_DURATIONS.find((d) => d.value === duration.value);
+    if (!type || (current && current.days <= leaveLeft(type))) return;
+    const fit = LEAVE_DURATIONS.find((d) => d.days <= leaveLeft(type));
+    if (fit) duration.value = fit.value;
+  }
+
   function refreshLeaveTotal() {
     const spec =
       LEAVE_DURATIONS.find((d) => d.value === el("leave-duration").value) ||
       LEAVE_DURATIONS[0];
+    const type = selectedLeaveType();
+    const left = type ? leaveLeft(type) : 0;
     el("leave-total").textContent = `${spec.days} ngày`;
+    el("leave-left").textContent = type ? ` · còn ${left} ngày ${leaveShortName(type)}` : "";
+    const over = Boolean(type) && spec.days > left;
+    el("leave-over").hidden = !over;
+    el("leave-over").textContent = over
+      ? `Chỉ còn ${left} ngày ${leaveShortName(type)} — chọn thời lượng ngắn hơn hoặc loại phép khác.`
+      : "";
+    el("leave-duration").setAttribute("aria-invalid", String(over));
+    return !over;
   }
 
   function confirmLeave(dateKey, label, cell) {
-    const types = (cachedLeaveTypes || []).filter((t) => t.id);
+    const types = leaveTypes();
     if (types.length === 0) {
       if (cell && cell.isConnected) cell.focus();
       showToast("Chưa có loại phép — bấm nút ↻ ở góc trên để cập nhật.", true);
+      return;
+    }
+    if (leaveExhausted()) {
+      const list = types
+        .map((type) => `${leaveShortName(type)} ${type.used || 0}/${type.total || 0}`)
+        .join(", ");
+      showNotice(
+        "Đã hết ngày phép",
+        `Không loại phép nào còn số dư trong năm nay (${list}). Không xin nghỉ được cho <b>${label}</b>.`,
+        dateKey
+      );
       return;
     }
 
@@ -1383,6 +1526,11 @@ document.addEventListener("DOMContentLoaded", function () {
         const reason = el("leave-reason").value.trim();
         if (!typeId) {
           done({ status: "error", message: "Chọn loại phép để gửi đơn." });
+          return;
+        }
+        if (!refreshLeaveTotal()) {
+          el("leave-duration").focus();
+          done({ status: "invalid" });
           return;
         }
         if (!reason) {
@@ -1508,14 +1656,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
         const attendance = data.attendanceData;
         calDayList = (attendance && attendance.dayList) || {};
-        calRequests = data.requestData || [];
+        calRequests = mergeRequests(data.requestData, calDayList);
         cachedLeaveTypes = data.leaveData || [];
         calLeaveRequests = data.leaveRequestData || [];
         if (attendance && attendance.dayList) renderCycleStats(attendance.dayList);
         else resetCycleStats();
 
         renderLeaveList(data.leaveData, data.leaveError, cachedRequestUsed);
-        renderRequests(data.requestData);
+        renderRequests(calRequests);
         renderLeaveRequests(data.leaveRequestData);
         renderToday(attendance && attendance.entries);
       }

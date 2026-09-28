@@ -1203,6 +1203,7 @@
         font-size: 10px;
         font-weight: 600;
         line-height: 1.15;
+        white-space: nowrap;
       }
 
       .req.r-pending { color: var(--amber); }
@@ -1310,12 +1311,21 @@
         outline-offset: -2px;
       }
 
-      .cell-menu .cm-leave:hover,
+      .cell-menu .cm-item.is-out .cm-ico {
+        background: var(--fill);
+        color: var(--soft);
+      }
+
+      .cell-menu .cm-item.is-out .cm-sub {
+        color: var(--rust);
+      }
+
+      .cell-menu .cm-leave:hover:not(.is-out),
       .cell-menu .cm-leave:focus-visible {
         background: rgba(168, 80, 47, 0.09);
       }
 
-      .cell-menu .cm-att:hover,
+      .cell-menu .cm-att:hover:not(.is-out),
       .cell-menu .cm-att:focus-visible {
         background: rgba(31, 92, 67, 0.09);
       }
@@ -1658,6 +1668,15 @@
         background: var(--fill-hover);
       }
 
+      .confirm .no.primary {
+        background: var(--green);
+        color: #fffdf9;
+      }
+
+      .confirm .no.primary:hover {
+        background: #1a4d38;
+      }
+
       .confirm .yes {
         background: var(--green);
         color: #fffdf9;
@@ -1974,7 +1993,7 @@
           </label>
           <label class="lv-field">
             <span class="lv-lbl">Thời lượng</span>
-            <select id="leave-duration"></select>
+            <select id="leave-duration" aria-describedby="leave-over"></select>
           </label>
           <label class="lv-field">
             <span class="lv-lbl">Lý do</span>
@@ -1987,8 +2006,9 @@
             ></textarea>
           </label>
           <div class="lv-err" id="leave-reason-err" hidden>Nhập lý do nghỉ để gửi đơn.</div>
+          <div class="lv-err" id="leave-over" role="alert" hidden></div>
           <div class="lv-total">
-            <span>Tổng</span>
+            <span>Tổng<span id="leave-left"></span></span>
             <b id="leave-total">1 ngày</b>
           </div>
         </div>
