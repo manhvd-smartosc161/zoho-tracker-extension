@@ -36,6 +36,7 @@ document.addEventListener("DOMContentLoaded", function () {
   let cachedRequestUsed = 0;
   let cachedLeaveTypes = [];
   let cycleOffset = 0;
+  let lastSyncFailed = false;
 
   function formatTime(date) {
     return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
@@ -276,7 +277,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     const row = el(`${key}-row`);
-    row.dataset.empty = String(days.length === 0);
+    row.disabled = days.length === 0;
     row.setAttribute("aria-expanded", "false");
     list.hidden = true;
   }
@@ -286,7 +287,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const list = el(`${key}-detail`);
 
     row.addEventListener("click", function () {
-      if (row.dataset.empty === "true") return;
+      if (row.disabled) return;
       const expanded = row.getAttribute("aria-expanded") === "true";
       row.setAttribute("aria-expanded", String(!expanded));
       list.hidden = expanded;
@@ -351,7 +352,7 @@ document.addEventListener("DOMContentLoaded", function () {
         !day.approvalInfo &&
         !day.leaveDaysTaken
       ) {
-        missingRequest.push({ date, label: "Chưa tạo", pillClass: "p-rejected" });
+        missingRequest.push({ date, label: "Chưa tạo request", pillClass: "p-rejected" });
       }
     });
 
@@ -515,6 +516,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const label = document.createElement("span");
     label.className = "name";
     label.textContent = name;
+    label.title = name;
 
     const nums = document.createElement("span");
     nums.className = "nums tnum";
@@ -542,7 +544,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (rows.length === 0) {
       const note = document.createElement("div");
       note.className = "quota-empty";
-      note.textContent = error || "Chưa có dữ liệu phép — bấm Cập nhật.";
+      note.textContent = error || "Chưa có dữ liệu phép — bấm nút ↻ ở góc trên để cập nhật.";
       container.appendChild(note);
       el("leave-aside").textContent = "";
     } else {
@@ -576,8 +578,8 @@ document.addEventListener("DOMContentLoaded", function () {
     return "";
   }
 
-  function calCell(className, parts) {
-    const cell = document.createElement("div");
+  function calCell(className, parts, tag) {
+    const cell = document.createElement(tag || "div");
     cell.className = className;
     parts.filter(Boolean).forEach((p) => cell.appendChild(p));
     return cell;
@@ -701,22 +703,42 @@ document.addEventListener("DOMContentLoaded", function () {
         if (info) parts.push(calLine(`req ${info.cls}`, info.text));
       }
 
-      const cell = calCell(classes.join(" "), parts);
-
       // Đơn đã huỷ hoặc bị từ chối không chặn việc tạo lại
       const blocking =
         request && request.status !== "cancelled" && request.status !== "rejected";
+      const cancellable = request && request.status === "pending";
+      const creatable = !cancellable && !blocking && shortDay && past;
 
-      if (request && request.status === "pending") {
+      const cell = calCell(
+        classes.join(" "),
+        parts,
+        cancellable || creatable ? "button" : "div"
+      );
+      cell.dataset.key = key;
+      const summary = parts
+        .slice(1)
+        .filter(Boolean)
+        .map((p) => p.textContent)
+        .join(", ");
+
+      if (cancellable) {
+        cell.type = "button";
         cell.className += " has-req";
         cell.title = "Bấm để huỷ request";
-        cell.addEventListener("click", () => confirmCancel(request, label));
-      } else if (!blocking && shortDay && past) {
+        cell.setAttribute("aria-label", `${label}, ${summary} — huỷ request`);
+        cell.addEventListener("click", () => confirmCancel(request, label, key));
+      } else if (creatable) {
+        cell.type = "button";
         cell.className += " actionable";
         const absentDay = classes.includes("is-absent");
         cell.title = absentDay
           ? "Bấm để chọn loại request"
           : "Bấm để tạo request chấm công";
+        cell.setAttribute(
+          "aria-label",
+          `${label}, ${summary} — ${absentDay ? "chọn loại request" : "tạo request chấm công"}`
+        );
+        if (absentDay) cell.setAttribute("aria-haspopup", "menu");
         cell.addEventListener("click", (event) => {
           if (absentDay) openCellMenu(cell, event, key, label);
           else confirmCreate(key, label);
@@ -745,7 +767,7 @@ document.addEventListener("DOMContentLoaded", function () {
       { num: full, cap: "Đủ 8 tiếng", tone: "n-ok" },
       { num: mid, cap: "6–8 tiếng", tone: "n-warn" },
       { num: low, cap: "Dưới 6 tiếng", tone: "n-bad" },
-      { num: absent, cap: "Vắng chưa xử lý", tone: "n-bad" },
+      { num: absent, cap: "Vắng", tone: "n-bad" },
     ].forEach((cell) => {
       sum.appendChild(
         calCell(`cell ${cell.tone}`, [
@@ -770,16 +792,21 @@ document.addEventListener("DOMContentLoaded", function () {
   const TOAST_CHECK = "M5 12.5l4.2 4.2L19 7";
   const TOAST_CROSS = "M7 7l10 10M17 7L7 17";
 
-  function showToast(text, danger) {
+  function hideToast() {
+    clearTimeout(toastTimer);
+    el("toast").classList.remove("show");
+  }
+
+  function showToast(text, isError) {
     const box = el("toast");
-    if (!box) return;
     el("toast-text").textContent = text;
     const path = box.querySelector(".ic svg path");
-    if (path) path.setAttribute("d", danger ? TOAST_CROSS : TOAST_CHECK);
-    box.classList.toggle("is-danger", Boolean(danger));
+    if (path) path.setAttribute("d", isError ? TOAST_CROSS : TOAST_CHECK);
+    box.classList.toggle("is-danger", Boolean(isError));
+    el("toast-close").hidden = !isError;
     box.classList.add("show");
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => box.classList.remove("show"), 2600);
+    if (!isError) toastTimer = setTimeout(hideToast, 2600);
   }
 
   function minutesToTime(min) {
@@ -795,8 +822,10 @@ document.addEventListener("DOMContentLoaded", function () {
     return h * 60 + mi;
   }
 
-  function askConfirm({ title, message, confirmText, danger, successText, fields, leaveFields, onConfirm }) {
-    const back = el("confirm-back");
+  function askConfirm({ title, message, confirmText, cancelText, danger, successText, fields, leaveFields, returnKey, onConfirm }) {
+    const dialog = el("confirm-dialog");
+    const opener = document.activeElement;
+    let busy = false;
     const yes = el("confirm-yes");
     const no = el("confirm-no");
     const err = el("confirm-err");
@@ -841,35 +870,52 @@ document.addEventListener("DOMContentLoaded", function () {
       duration.onchange = refreshLeaveTotal;
     }
     yes.textContent = confirmText;
+    no.textContent = cancelText || "Đóng";
     yes.classList.toggle("danger", Boolean(danger));
     yes.disabled = false;
     no.disabled = false;
     err.hidden = true;
-    back.hidden = false;
+    if (!dialog.open) dialog.showModal();
+
+    function restoreFocus() {
+      const target =
+        (returnKey && document.querySelector(`.cal-day[data-key="${returnKey}"]`)) ||
+        (opener && opener.isConnected ? opener : null);
+      if (target && typeof target.focus === "function") target.focus();
+    }
 
     function close() {
-      back.hidden = true;
+      dialog.onclose = null;
+      if (dialog.open) dialog.close();
       yes.onclick = null;
       no.onclick = null;
-      back.onclick = null;
+      dialog.onclick = null;
+      dialog.oncancel = null;
+      restoreFocus();
     }
 
     no.onclick = close;
-    back.onclick = (event) => {
-      if (event.target === back) close();
+    dialog.onclick = (event) => {
+      if (event.target === dialog && !busy) close();
+    };
+    dialog.oncancel = (event) => {
+      event.preventDefault();
+      if (!busy) close();
     };
 
     yes.onclick = function () {
+      busy = true;
       yes.disabled = true;
       no.disabled = true;
       yes.textContent = "Đang gửi...";
       err.hidden = true;
 
       onConfirm(function (res) {
+        busy = false;
         if (res && res.status === "success") {
-          close();
           renderCalendar();               // hiện trạng thái mới ngay
-          if (successText) showToast(successText, danger);
+          close();
+          if (successText) showToast(successText);
           setTimeout(() => requestUpdate(), 600);  // đồng bộ lại với Zoho
           return;
         }
@@ -939,25 +985,25 @@ document.addEventListener("DOMContentLoaded", function () {
     if (res.redirected && /accounts\.zoho\.com|signin/.test(res.url)) {
       throw new Error("Phiên đăng nhập hết hạn — đăng nhập lại Zoho.");
     }
-    if (!res.ok) throw new Error(`Zoho trả lỗi HTTP ${res.status}`);
+    if (!res.ok) throw new Error(`Zoho đang lỗi (HTTP ${res.status}) — thử lại sau ít phút.`);
 
     let data;
     try {
       data = JSON.parse(text);
     } catch {
-      throw new Error("Zoho trả về dữ liệu không đọc được.");
+      throw new Error("Zoho trả về dữ liệu không đọc được — đăng nhập lại people.zoho.com rồi thử lại.");
     }
 
     const reason = data.message || data.errorMessage || data.error || "";
     if (data.status === 1 || /error|fail|invalid|limit/i.test(reason)) {
-      throw new Error(reason || "Zoho từ chối yêu cầu.");
+      throw new Error(reason || "Zoho từ chối yêu cầu — mở people.zoho.com để kiểm tra.");
     }
     return data;
   }
 
   async function createRequest(dateKey, fromMin, toMin) {
     const { csrfToken, erecno } = await readCreds();
-    if (!csrfToken) throw new Error("Chưa đăng nhập Zoho.");
+    if (!csrfToken) throw new Error("Chưa đăng nhập Zoho — đăng nhập people.zoho.com rồi thử lại.");
     if (!erecno) throw new Error("Chưa có mã nhân viên — mở people.zoho.com một lần.");
 
     const zohoDate = toZohoDate(dateKey);
@@ -1075,9 +1121,9 @@ document.addEventListener("DOMContentLoaded", function () {
 
   async function createLeave(dateKey, leaveTypeId, duration, reason) {
     const { csrfToken, erecno, zuid } = await readCreds();
-    if (!csrfToken) throw new Error("Chưa đăng nhập Zoho.");
+    if (!csrfToken) throw new Error("Chưa đăng nhập Zoho — đăng nhập people.zoho.com rồi thử lại.");
     if (!erecno) throw new Error("Chưa có mã nhân viên — mở people.zoho.com một lần.");
-    if (!leaveTypeId) throw new Error("Chưa chọn loại phép.");
+    if (!leaveTypeId) throw new Error("Chọn loại phép để gửi đơn.");
 
     const spec = LEAVE_DURATIONS.find((d) => d.value === duration) || LEAVE_DURATIONS[0];
     const zohoDate = toZohoDate(dateKey);
@@ -1110,7 +1156,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   async function cancelRequest(recordId) {
     const { csrfToken } = await readCreds();
-    if (!csrfToken) throw new Error("Chưa đăng nhập Zoho.");
+    if (!csrfToken) throw new Error("Chưa đăng nhập Zoho — đăng nhập people.zoho.com rồi thử lại.");
     if (!recordId) throw new Error("Thiếu mã đơn — bấm Cập nhật rồi thử lại.");
 
     return postZoho(
@@ -1141,11 +1187,14 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   let openMenu = null;
+  let menuTrigger = null;
 
-  function closeCellMenu() {
+  function closeCellMenu(restore) {
     if (!openMenu) return;
     openMenu.remove();
     openMenu = null;
+    if (restore === true && menuTrigger && menuTrigger.isConnected) menuTrigger.focus();
+    menuTrigger = null;
     document.removeEventListener("click", onDocClick, true);
     document.removeEventListener("keydown", onMenuKey, true);
     window.removeEventListener("scroll", closeCellMenu, true);
@@ -1156,13 +1205,28 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function onMenuKey(event) {
-    if (event.key === "Escape") closeCellMenu();
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeCellMenu(true);
+      return;
+    }
+    if (event.key === "Tab") {
+      closeCellMenu(true);
+      return;
+    }
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    const items = [...openMenu.querySelectorAll(".cm-item")];
+    const index = items.indexOf(document.activeElement);
+    const step = event.key === "ArrowDown" ? 1 : -1;
+    event.preventDefault();
+    items[(index + step + items.length) % items.length].focus();
   }
 
   function menuItem(cls, iconPath, title, sub) {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = `cm-item ${cls}`;
+    btn.setAttribute("role", "menuitem");
 
     const ico = document.createElement("span");
     ico.className = "cm-ico";
@@ -1189,28 +1253,32 @@ document.addEventListener("DOMContentLoaded", function () {
 
     const menu = document.createElement("div");
     menu.className = "cell-menu";
+    menu.setAttribute("role", "menu");
+    menu.setAttribute("aria-label", `Chọn loại request cho ${label}`);
+    menuTrigger = cell;
 
     const head = document.createElement("div");
     head.className = "cm-head";
+    head.setAttribute("aria-hidden", "true");
     head.textContent = label;
     menu.appendChild(head);
 
     const leave = menuItem(
       "cm-leave",
       "M8 3v3M16 3v3M4 9h16M5 6h14a1 1 0 011 1v12a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1z",
-      "Request Leave",
+      "Request leave",
       "Xin nghỉ phép"
     );
     leave.addEventListener("click", (e) => {
       e.stopPropagation();
       closeCellMenu();
-      confirmLeave(dateKey, label);
+      confirmLeave(dateKey, label, cell);
     });
 
     const attendance = menuItem(
       "cm-att",
       "M12 7v5l3 2M12 3a9 9 0 110 18 9 9 0 010-18z",
-      "Request Attendance",
+      "Request attendance",
       "Bổ sung chấm công"
     );
     attendance.addEventListener("click", (e) => {
@@ -1247,15 +1315,16 @@ document.addEventListener("DOMContentLoaded", function () {
   function confirmCreate(dateKey, label) {
     askConfirm({
       title: "Tạo request chấm công",
-      message: `Tạo đơn <b>${label}</b>, ca làm:`,
+      message: `Tạo request cho <b>${label}</b>, ca làm:`,
       fields: true,
       confirmText: "Tạo request",
-      successText: `Đã tạo đơn ${label}`,
+      successText: `Đã tạo request ${label}`,
+      returnKey: dateKey,
       onConfirm(done) {
         const from = readTimeField("shift-from");
         const to = readTimeField("shift-to");
         if (from === null || to === null) {
-          done({ status: "error", message: "Giờ không hợp lệ." });
+          done({ status: "error", message: "Nhập giờ dạng HH:MM, ví dụ 09:00." });
           return;
         }
         if (to <= from) {
@@ -1283,6 +1352,7 @@ document.addEventListener("DOMContentLoaded", function () {
   function showReasonError(show) {
     el("leave-reason-err").hidden = !show;
     el("leave-reason").classList.toggle("invalid", Boolean(show));
+    el("leave-reason").setAttribute("aria-invalid", String(Boolean(show)));
   }
 
   function refreshLeaveTotal() {
@@ -1292,10 +1362,11 @@ document.addEventListener("DOMContentLoaded", function () {
     el("leave-total").textContent = `${spec.days} ngày`;
   }
 
-  function confirmLeave(dateKey, label) {
+  function confirmLeave(dateKey, label, cell) {
     const types = (cachedLeaveTypes || []).filter((t) => t.id);
     if (types.length === 0) {
-      showToast("Chưa có loại phép — bấm Cập nhật", true);
+      if (cell && cell.isConnected) cell.focus();
+      showToast("Chưa có loại phép — bấm nút ↻ ở góc trên để cập nhật.", true);
       return;
     }
 
@@ -1305,12 +1376,13 @@ document.addEventListener("DOMContentLoaded", function () {
       confirmText: "Gửi đơn",
       leaveFields: types,
       successText: `Đã gửi đơn nghỉ ${label}`,
+      returnKey: dateKey,
       onConfirm(done) {
         const typeId = el("leave-type").value;
         const duration = el("leave-duration").value;
         const reason = el("leave-reason").value.trim();
         if (!typeId) {
-          done({ status: "error", message: "Chưa chọn loại phép." });
+          done({ status: "error", message: "Chọn loại phép để gửi đơn." });
           return;
         }
         if (!reason) {
@@ -1344,13 +1416,15 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 
-  function confirmCancel(request, label) {
+  function confirmCancel(request, label, dateKey) {
     askConfirm({
       title: "Huỷ request",
-      message: `Huỷ đơn <b>${label}</b>?`,
-      confirmText: "Huỷ đơn",
+      message: `Huỷ request chấm công <b>${label}</b>? Có thể tạo lại sau.`,
+      confirmText: "Huỷ request",
+      cancelText: "Giữ request",
       danger: true,
-      successText: `Đã huỷ đơn ${label}`,
+      successText: `Đã huỷ request ${label}`,
+      returnKey: dateKey,
       onConfirm(done) {
         runAction(() => cancelRequest(request.recordId), function (res) {
           if (res.status === "success") {
@@ -1367,8 +1441,9 @@ document.addEventListener("DOMContentLoaded", function () {
   function toggleCalendar(show) {
     el("calendar-view").hidden = !show;
     el("cycle-board").hidden = show;
+    el("hero").hidden = show;
     el("calendarBtn").setAttribute("aria-pressed", String(show));
-    el("calendarBtn").title = show ? "Quay lại tổng quan" : "Xem lịch tháng";
+    el("calendarBtn").title = show ? "Quay lại tổng quan" : "Xem lịch chấm công";
     if (show) renderCalendar();
   }
 
@@ -1422,9 +1497,14 @@ document.addEventListener("DOMContentLoaded", function () {
       ],
       function (data) {
         if (renderLock(data.syncError)) return;
-        el("last-updated").textContent = data.lastUpdated
-          ? `Cập nhật ${formatTime(new Date(data.lastUpdated))}`
-          : "";
+        const stamp = data.lastUpdated ? formatTime(new Date(data.lastUpdated)) : "";
+        const updated = el("last-updated");
+        updated.classList.toggle("err", lastSyncFailed);
+        updated.textContent = lastSyncFailed
+          ? `Cập nhật lỗi${stamp ? ` · dữ liệu lúc ${stamp}` : ""}`
+          : stamp
+            ? `Cập nhật ${stamp}`
+            : "";
 
         const attendance = data.attendanceData;
         calDayList = (attendance && attendance.dayList) || {};
@@ -1452,6 +1532,7 @@ document.addEventListener("DOMContentLoaded", function () {
       refreshBtn.classList.remove("spinning");
 
       const ok = res && res.status === "success";
+      lastSyncFailed = !ok;
       refreshBtn.classList.toggle("err", !ok);
       refreshBtn.title = ok ? "Cập nhật dữ liệu" : "Cập nhật thất bại — thử lại";
 
@@ -1461,7 +1542,8 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   ROWS.forEach(bindRow);
-  bindRow("absent");
+
+  el("toast-close").addEventListener("click", hideToast);
 
   render();
   requestUpdate();
