@@ -41,9 +41,9 @@ export function lastDayOf(cycle) {
 }
 
 // Lấy rộng 2 chu kỳ để popup xem được cả tháng trước
-export function getFetchRange(today) {
+export function getFetchRange(today, ahead) {
   return {
     start: getCycle(today, -1).start,
-    end: lastDayOf(getCycle(today, 0)),
+    end: lastDayOf(getCycle(today, ahead || 0)),
   };
 }

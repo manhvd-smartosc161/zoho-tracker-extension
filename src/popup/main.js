@@ -5,8 +5,8 @@ import { bindToast } from "./ui/toast.js";
 import { renderCalendar, toggleCalendar } from "./views/calendar.js";
 import { bindRows } from "./views/cycle-board.js";
 
-function shiftOffset(key, delta, min) {
-  state[key] = Math.min(0, Math.max(min, state[key] + delta));
+function shiftOffset(key, delta, min, max) {
+  state[key] = Math.min(max, Math.max(min, state[key] + delta));
 }
 
 bindRows();
@@ -31,21 +31,21 @@ el("refreshBtn").addEventListener("click", () => requestUpdate());
 el("calendarBtn").addEventListener("click", () => toggleCalendar(el("calendar-view").hidden));
 
 el("cal-prev").addEventListener("click", () => {
-  shiftOffset("calOffset", -1, -2);
+  shiftOffset("calOffset", -1, -2, 1);
   renderCalendar();
 });
 
 el("cal-next").addEventListener("click", () => {
-  shiftOffset("calOffset", 1, -2);
+  shiftOffset("calOffset", 1, -2, 1);
   renderCalendar();
 });
 
 el("cycle-prev").addEventListener("click", () => {
-  shiftOffset("cycleOffset", -1, -1);
+  shiftOffset("cycleOffset", -1, -1, 0);
   render();
 });
 
 el("cycle-next").addEventListener("click", () => {
-  shiftOffset("cycleOffset", 1, -1);
+  shiftOffset("cycleOffset", 1, -1, 0);
   render();
 });

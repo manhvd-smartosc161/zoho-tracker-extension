@@ -1,8 +1,8 @@
 import { dateKeyOf, getCycle, lastDayOf } from "../../shared/dates.js";
 import { el } from "../dom.js";
-import { confirmCancel, confirmCreate } from "../flows.js";
+import { confirmCancel, confirmLeave } from "../flows.js";
 import { formatDayLabel, formatHours, formatRange } from "../format.js";
-import { requestSeconds, workBand } from "../quota.js";
+import { countsAgainstQuota, requestSeconds, workBand } from "../quota.js";
 import { state } from "../state.js";
 import { closeCellMenu, openCellMenu } from "../ui/cell-menu.js";
 
@@ -30,6 +30,16 @@ function calLine(className, text) {
   node.className = className;
   node.textContent = text;
   return node;
+}
+
+const LEAVE_LABELS = {
+  pending: { text: "Chờ", cls: "r-pending" },
+  approved: { text: "Duyệt", cls: "r-approved" },
+};
+
+function pickLeaveRequest(key) {
+  const sameDay = state.leaveRequests.filter((r) => r.date === key && countsAgainstQuota(r));
+  return sameDay.find((r) => r.status === "pending") || sameDay[0];
 }
 
 function indexDays(dayList) {
@@ -79,7 +89,8 @@ function buildDayCell(date, day, today, totals) {
   if (date.getTime() === today.getTime()) classes.push("today");
 
   const request = pickRequest(key);
-  const leaveReq = state.leaveRequests.find((r) => r.date === key && r.status === "pending");
+  const leaveReq = pickLeaveRequest(key);
+  const holiday = Boolean(day && /holiday/i.test(day.status || ""));
   const pendingSecs = request && request.status === "pending" ? requestSeconds(request) : 0;
 
   const parts = [calLine("dnum", String(date.getDate()))];
@@ -98,7 +109,11 @@ function buildDayCell(date, day, today, totals) {
     parts.push(calLine("mark m-leave", day.leaveDaysTaken === 0.5 ? "Leave ½" : "Leave"));
   } else if (leaveReq && !weekend) {
     parts.push(calLine("mark m-leave", leaveReq.days === 0.5 ? "Leave ½" : "Leave"));
-    parts.push(calLine("req r-pending", "Chờ"));
+    const info = LEAVE_LABELS[leaveReq.status];
+    if (info) parts.push(calLine(`req ${info.cls}`, info.text));
+  } else if (holiday) {
+    parts.push(calLine("mark m-holiday", "Lễ"));
+    classes.push("holiday");
   } else if (day && (day.status || "").trim() === "Absent" && !weekend) {
     parts.push(calLine("mark m-absent", "Vắng"));
     classes.push("is-absent");
@@ -125,11 +140,13 @@ function buildDayCell(date, day, today, totals) {
   const blocking = request && request.status !== "cancelled" && request.status !== "rejected";
   const cancellable = request && request.status === "pending";
   const creatable = !cancellable && !blocking && shortDay && past;
+  const leavable =
+    date > today && !weekend && !holiday && !leaveReq && !(day && day.leaveDaysTaken);
 
   const cell = calCell(
     classes.filter(Boolean).join(" "),
     parts,
-    cancellable || creatable ? "button" : "div"
+    cancellable || creatable || leavable ? "button" : "div"
   );
   cell.dataset.key = key;
   const summary = parts
@@ -145,19 +162,18 @@ function buildDayCell(date, day, today, totals) {
     cell.setAttribute("aria-label", `${label}, ${summary} — huỷ request`);
     cell.addEventListener("click", () => confirmCancel(request, label, key));
   } else if (creatable) {
-    const absentDay = classes.includes("is-absent");
     cell.type = "button";
     cell.className += " actionable";
-    cell.title = absentDay ? "Bấm để chọn loại request" : "Bấm để tạo request chấm công";
-    cell.setAttribute(
-      "aria-label",
-      `${label}, ${summary} — ${absentDay ? "chọn loại request" : "tạo request chấm công"}`
-    );
-    if (absentDay) cell.setAttribute("aria-haspopup", "menu");
-    cell.addEventListener("click", (event) => {
-      if (absentDay) openCellMenu(cell, event, key, label);
-      else confirmCreate(key, label);
-    });
+    cell.title = "Bấm để chọn loại request";
+    cell.setAttribute("aria-label", `${label}, ${summary} — chọn loại request`);
+    cell.setAttribute("aria-haspopup", "menu");
+    cell.addEventListener("click", (event) => openCellMenu(cell, event, key, label));
+  } else if (leavable) {
+    cell.type = "button";
+    cell.className += " actionable";
+    cell.title = "Bấm để xin nghỉ phép";
+    cell.setAttribute("aria-label", `${label} — xin nghỉ phép`);
+    cell.addEventListener("click", () => confirmLeave(key, label, cell));
   } else if (shortDay) {
     // Nói rõ vì sao không bấm được
     cell.title = !past
@@ -205,7 +221,7 @@ export function renderCalendar() {
 
   renderSummary(totals);
 
-  el("cal-next").disabled = state.calOffset >= 0;
+  el("cal-next").disabled = state.calOffset >= 1;
   el("cal-prev").disabled = state.calOffset <= -2;
 }
 

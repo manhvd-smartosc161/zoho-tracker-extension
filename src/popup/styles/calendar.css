@@ -148,7 +148,8 @@
 }
 
 .cal-day.blank,
-.cal-day.weekend {
+.cal-day.weekend,
+.cal-day.holiday {
   background: #faf8f3;
 }
 
@@ -200,6 +201,7 @@
 .h-mid .hrs { color: var(--amber); }
 .h-low .hrs { color: var(--danger); }
 .m-absent { color: var(--danger); }
+.m-holiday { color: var(--soft); }
 
 .cal-day .m-leave {
   color: var(--green);

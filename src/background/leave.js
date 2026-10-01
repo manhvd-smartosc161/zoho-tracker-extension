@@ -96,7 +96,7 @@ export async function fetchLeaveRequests() {
     return;
   }
 
-  const { start, end } = getFetchRange(new Date());
+  const { start, end } = getFetchRange(new Date(), 1);
   const sDate = formatZohoDate(start);
   const eDate = formatZohoDate(end);
   console.log("🌴 Leave requests: gọi API", sDate, "→", eDate);

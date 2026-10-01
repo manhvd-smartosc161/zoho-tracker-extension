@@ -110,18 +110,18 @@ Bốn ô trên đầu lịch tóm tắt chu kỳ đang xem: số ngày đủ 8 t
 
 Bấm vào ô ngày để tạo đơn — không cần mở Zoho.
 
-**Ngày thiếu giờ** (số giờ cam hoặc đỏ): bấm vào mở thẳng đơn chấm công. Giờ vào và giờ ra mặc định **09:00 – 18:30**, sửa được cả hai trước khi gửi.
-
-**Ngày vắng**: bấm vào hiện menu hai lựa chọn.
+**Ngày thiếu giờ** (số giờ cam hoặc đỏ) và **ngày vắng**: bấm vào hiện menu hai lựa chọn.
 
 - **Request Leave** — xin nghỉ phép. Chọn loại phép (kèm số ngày còn lại), thời lượng (cả ngày, nửa đầu, nửa cuối, hoặc một trong bốn phần tư ngày) và nhập lý do. Lý do bắt buộc.
-- **Request Attendance** — đơn chấm công như trên.
+- **Request Attendance** — đơn chấm công. Giờ vào và giờ ra mặc định **09:00 – 18:30**, sửa được cả hai trước khi gửi.
 
 Gửi xong ô đổi trạng thái ngay, không cần tải lại. Một thông báo nhỏ hiện lên dưới đáy popup xác nhận.
 
 **Huỷ đơn**: ô đang *Chờ duyệt* bấm vào để huỷ. Đơn đã huỷ không tính vào hạn mức, và ngày đó tạo lại đơn mới được.
 
-Ngày chưa qua thì chưa tạo được đơn — rê chuột vào ô sẽ thấy lý do.
+**Ngày trong tương lai**: ngày làm việc chưa tới (có dấu `+`) bấm vào mở thẳng đơn xin nghỉ phép, để đặt lịch nghỉ trước. Bấm `›` để xem thêm chu kỳ kế tiếp. Cuối tuần, ngày lễ (ghi **Lễ**) và ngày đã có đơn nghỉ thì không bấm được.
+
+Đơn chấm công chỉ tạo được cho ngày đã qua — rê chuột vào ô sẽ thấy lý do.
 
 ### Quy ước màu
 
