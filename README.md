@@ -121,7 +121,9 @@ Gửi xong ô đổi trạng thái ngay, không cần tải lại. Một thông 
 
 **Ngày trong tương lai**: ngày làm việc chưa tới (có dấu `+`) bấm vào mở thẳng đơn xin nghỉ phép, để đặt lịch nghỉ trước. Bấm `›` để xem thêm chu kỳ kế tiếp. Cuối tuần, ngày lễ (ghi **Lễ**) và ngày đã có đơn nghỉ thì không bấm được.
 
-Đơn chấm công chỉ tạo được cho ngày đã qua — rê chuột vào ô sẽ thấy lý do.
+**Hôm nay**: bấm vào hiện menu hai lựa chọn như ngày thiếu giờ — xin nghỉ hoặc bổ sung chấm công. Số giờ hôm nay hiện màu trung tính vì ca chưa kết thúc.
+
+Ngày tương lai chỉ xin nghỉ được, chưa tạo được đơn chấm công — rê chuột vào ô sẽ thấy lý do.
 
 ### Quy ước màu
 

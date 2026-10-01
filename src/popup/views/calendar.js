@@ -84,9 +84,10 @@ function buildDayCell(date, day, today, totals) {
   const tsecs = (day && day.tsecs) || 0;
   const weekend = date.getDay() === 0 || date.getDay() === 6;
 
+  const isToday = date.getTime() === today.getTime();
   const classes = ["cal-day"];
   if (weekend) classes.push("weekend");
-  if (date.getTime() === today.getTime()) classes.push("today");
+  if (isToday) classes.push("today");
 
   const request = pickRequest(key);
   const leaveReq = pickLeaveRequest(key);
@@ -99,6 +100,8 @@ function buildDayCell(date, day, today, totals) {
   if (pendingSecs > 0) {
     parts.push(calLine("hrs", formatHours(pendingSecs)));
     classes.push(hoursTone(pendingSecs));
+  } else if (tsecs > 0 && isToday) {
+    parts.push(calLine("hrs", formatHours(tsecs)));
   } else if (tsecs > 0) {
     parts.push(calLine("hrs", formatHours(tsecs)));
     classes.push(hoursTone(tsecs));
@@ -114,11 +117,16 @@ function buildDayCell(date, day, today, totals) {
   } else if (holiday) {
     parts.push(calLine("mark m-holiday", "Lễ"));
     classes.push("holiday");
-  } else if (day && (day.status || "").trim() === "Absent" && !weekend) {
+  } else if (day && (day.status || "").trim() === "Absent" && !weekend && !isToday) {
     parts.push(calLine("mark m-absent", "Vắng"));
     classes.push("is-absent");
     shortDay = true;
     if (!day.approvalInfo) totals.absent++;
+  }
+
+  if (leaveReq && (tsecs > 0 || pendingSecs > 0)) {
+    const info = LEAVE_LABELS[leaveReq.status];
+    parts.push(calLine(`req ${info ? info.cls : ""}`, leaveReq.days === 0.5 ? "Leave\u00a0½" : "Leave"));
   }
 
   if (leaveReq) shortDay = false;
@@ -139,9 +147,10 @@ function buildDayCell(date, day, today, totals) {
   // Đơn đã huỷ hoặc bị từ chối không chặn việc tạo lại
   const blocking = request && request.status !== "cancelled" && request.status !== "rejected";
   const cancellable = request && request.status === "pending";
-  const creatable = !cancellable && !blocking && shortDay && past;
-  const leavable =
-    date > today && !weekend && !holiday && !leaveReq && !(day && day.leaveDaysTaken);
+  const openDay = !weekend && !holiday && !leaveReq && !(day && day.leaveDaysTaken);
+  const creatable =
+    !cancellable && !blocking && ((shortDay && past) || (isToday && openDay));
+  const leavable = date > today && openDay;
 
   const cell = calCell(
     classes.filter(Boolean).join(" "),
@@ -149,23 +158,21 @@ function buildDayCell(date, day, today, totals) {
     cancellable || creatable || leavable ? "button" : "div"
   );
   cell.dataset.key = key;
-  const summary = parts
-    .slice(1)
-    .filter(Boolean)
-    .map((p) => p.textContent)
+  const summary = [label]
+    .concat(parts.slice(1).filter(Boolean).map((p) => p.textContent))
     .join(", ");
 
   if (cancellable) {
     cell.type = "button";
     cell.className += " has-req";
     cell.title = "Bấm để huỷ request";
-    cell.setAttribute("aria-label", `${label}, ${summary} — huỷ request`);
+    cell.setAttribute("aria-label", `${summary} — huỷ request`);
     cell.addEventListener("click", () => confirmCancel(request, label, key));
   } else if (creatable) {
     cell.type = "button";
     cell.className += " actionable";
     cell.title = "Bấm để chọn loại request";
-    cell.setAttribute("aria-label", `${label}, ${summary} — chọn loại request`);
+    cell.setAttribute("aria-label", `${summary} — chọn loại request`);
     cell.setAttribute("aria-haspopup", "menu");
     cell.addEventListener("click", (event) => openCellMenu(cell, event, key, label));
   } else if (leavable) {
