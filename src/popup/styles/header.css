@@ -46,7 +46,29 @@ header h1 {
   margin: 0;
 }
 
-#calendarBtn {
+.logo {
+  cursor: pointer;
+}
+
+.home-link {
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.home-link:hover {
+  color: var(--green);
+}
+
+#calendarBtn,
+#approvalsBtn {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -63,15 +85,36 @@ header h1 {
   appearance: none;
 }
 
-#calendarBtn svg {
+#calendarBtn svg,
+#approvalsBtn svg {
   width: 16px;
   height: 16px;
 }
 
 #calendarBtn:hover,
-#calendarBtn[aria-pressed="true"] {
+#calendarBtn[aria-pressed="true"],
+#approvalsBtn:hover,
+#approvalsBtn[aria-pressed="true"] {
   background: var(--hover);
   color: var(--ink);
+}
+
+.head-badge {
+  position: absolute;
+  top: 1px;
+  right: 0;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--amber);
+  color: #fffdf9;
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 15px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--paper);
+  pointer-events: none;
 }
 
 #refreshBtn {

@@ -26,6 +26,20 @@ export function quotaTone(used, quota) {
   return "ok";
 }
 
+const REGULARIZATION_TEXT = { approved: "Approved", rejected: "Rejected", pending: "Pending" };
+
+function regularizationStatus(code) {
+  if (code === undefined || code === null || code === "") return "approved";
+  const value = Number(code);
+  if (value === 1) return "approved";
+  if (value === 0) return "rejected";
+  return "pending";
+}
+
+export function hasActiveRegularization(day) {
+  return Boolean(day && day.approvalInfo) && regularizationStatus(day.approvalInfo.status) !== "rejected";
+}
+
 export function mergeRequests(requests, dayList) {
   const merged = (requests || []).slice();
   const taken = new Set(
@@ -40,10 +54,11 @@ export function mergeRequests(requests, dayList) {
     if (taken.has(key)) return;
     taken.add(key);
     const clock = (text) => (/(\d{1,2}:\d{2})\s*$/.exec(String(text || "")) || [])[1] || "";
+    const status = regularizationStatus(info.status);
     merged.push({
       date: key,
-      status: "approved",
-      statusText: "Approved",
+      status,
+      statusText: REGULARIZATION_TEXT[status],
       recordId: String(info.recordId || info.regDetailsId || ""),
       inTime: clock(info.new_intime),
       outTime: clock(info.new_outtime),

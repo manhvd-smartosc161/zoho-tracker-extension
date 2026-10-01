@@ -2,7 +2,7 @@ import { dateKeyOf, getCycle, lastDayOf } from "../../shared/dates.js";
 import { el } from "../dom.js";
 import { confirmCancel, confirmLeave } from "../flows.js";
 import { formatDayLabel, formatHours, formatRange } from "../format.js";
-import { countsAgainstQuota, requestSeconds, workBand } from "../quota.js";
+import { countsAgainstQuota, hasActiveRegularization, requestSeconds, workBand } from "../quota.js";
 import { state } from "../state.js";
 import { closeCellMenu, openCellMenu } from "../ui/cell-menu.js";
 
@@ -121,7 +121,7 @@ function buildDayCell(date, day, today, totals) {
     parts.push(calLine("mark m-absent", "Vắng"));
     classes.push("is-absent");
     shortDay = true;
-    if (!day.approvalInfo) totals.absent++;
+    if (!hasActiveRegularization(day)) totals.absent++;
   }
 
   if (leaveReq && (tsecs > 0 || pendingSecs > 0)) {
@@ -230,13 +230,4 @@ export function renderCalendar() {
 
   el("cal-next").disabled = state.calOffset >= 1;
   el("cal-prev").disabled = state.calOffset <= -2;
-}
-
-export function toggleCalendar(show) {
-  el("calendar-view").hidden = !show;
-  el("cycle-board").hidden = show;
-  el("hero").hidden = show;
-  el("calendarBtn").setAttribute("aria-pressed", String(show));
-  el("calendarBtn").title = show ? "Quay lại tổng quan" : "Xem lịch chấm công";
-  if (show) renderCalendar();
 }

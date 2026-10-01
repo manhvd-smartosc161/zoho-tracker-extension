@@ -104,6 +104,78 @@ export async function fetchRequestList() {
   return parseRequests(data);
 }
 
+const photoCache = new Map();
+
+export function fetchPhoto(url) {
+  if (!photoCache.has(url)) {
+    const request = fetch(url, { credentials: "include" })
+      .then(async (res) => {
+        const type = res.headers.get("content-type") || "";
+        if (!res.ok || !type.startsWith("image/")) {
+          throw new Error(`HTTP ${res.status}, content-type "${type}"`);
+        }
+        return URL.createObjectURL(await res.blob());
+      })
+      .catch((error) => {
+        console.warn("[approvals] không tải được ảnh", url, error.message);
+        throw error;
+      });
+    photoCache.set(url, request);
+  }
+  return photoCache.get(url);
+}
+
+export async function fetchApprovals() {
+  const { csrfToken, erecno } = await readCreds();
+  if (!csrfToken) throw new Error(NOT_LOGGED_IN);
+  if (!erecno) throw new Error(NO_ERECNO);
+
+  return postZoho(
+    "approvalAction.zp",
+    new URLSearchParams({
+      action: "myApprovals",
+      empErecNo: String(erecno),
+      empStatus: "3",
+      mode: "viewApprovals",
+      approvalForm: "-1",
+      approvalStatus: "pending",
+      conreqcsr: csrfToken,
+    }),
+    FORM_HEADERS
+  );
+}
+
+async function decideRecord(recordId, status, comment, extra) {
+  const { csrfToken } = await readCreds();
+  if (!csrfToken) throw new Error(NOT_LOGGED_IN);
+  if (!recordId) throw new Error("Không tìm thấy mã request — bấm ↻ để tải lại danh sách.");
+
+  const data = await postZoho(
+    "formAction.zp",
+    new URLSearchParams({
+      mode: "approveRejectRecord",
+      recordIds: JSON.stringify([String(recordId)]),
+      comment: comment || "",
+      approvalStatus: String(status),
+      ...extra,
+      conreqcsr: csrfToken,
+    }),
+    FORM_HEADERS
+  );
+  if (!data || data.success !== true) {
+    throw new Error((data && data.message) || "Zoho không xử lý được request này — mở people.zoho.com để kiểm tra.");
+  }
+  return data;
+}
+
+export function approveRequest(item, comment) {
+  return decideRecord(item.recordId, 1, comment, { isAllLevelApprove: "false" });
+}
+
+export function rejectRequest(item, reason) {
+  return decideRecord(item.recordId, 0, reason);
+}
+
 export async function createLeave(dateKey, leaveTypeId, duration, reason) {
   const { csrfToken, erecno, zuid } = await readCreds();
   if (!csrfToken) throw new Error(NOT_LOGGED_IN);
@@ -111,6 +183,9 @@ export async function createLeave(dateKey, leaveTypeId, duration, reason) {
   if (!leaveTypeId) throw new Error("Chọn loại phép để gửi đơn.");
 
   const spec = leaveDuration(duration);
+  if (spec.value !== duration) {
+    throw new Error("Thời lượng này chưa hỗ trợ — tạo đơn nửa ngày hoặc 1/4 ngày trực tiếp trên people.zoho.com.");
+  }
   const zohoDate = toZohoDate(dateKey);
 
   const body = new URLSearchParams({

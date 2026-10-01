@@ -2,7 +2,7 @@ import { ATTENDANCE_REQUEST_QUOTA, DAYS_6_TO_8_LIMIT } from "../../shared/config
 import { fromDateKey, getCycle, lastDayOf } from "../../shared/dates.js";
 import { el } from "../dom.js";
 import { formatDayLabel, formatHours, formatRange } from "../format.js";
-import { countsAgainstQuota, quotaTone, workBand } from "../quota.js";
+import { countsAgainstQuota, hasActiveRegularization, quotaTone, workBand } from "../quota.js";
 import { state } from "../state.js";
 
 const ROWS = ["below-6", "below-8", "missing-request", "sent-request", "leave-request"];
@@ -169,8 +169,9 @@ export function renderCycleStats(dayList) {
       }
     }
 
-    if (day.approvalInfo) requestUsed++;
-    if (status === "Absent" && !isToday && !day.approvalInfo && !day.leaveDaysTaken) {
+    const regularized = hasActiveRegularization(day);
+    if (regularized) requestUsed++;
+    if (status === "Absent" && !isToday && !regularized && !day.leaveDaysTaken) {
       missingRequest.push({ date, label: "Chưa tạo request", pillClass: "p-rejected" });
     }
   });

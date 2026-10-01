@@ -178,6 +178,8 @@
   background: var(--card);
   border-radius: 14px;
   box-shadow: 0 12px 32px rgba(42, 39, 35, 0.18);
+  max-height: calc(100vh - 24px);
+  overflow-y: auto;
   overscroll-behavior: contain;
 }
 

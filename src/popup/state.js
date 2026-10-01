@@ -7,4 +7,13 @@ export const state = {
   leaveTypes: [],
   requestUsed: 0,
   lastSyncFailed: false,
+  view: "overview",
+  approvals: {
+    status: "idle",
+    items: [],
+    error: "",
+    selected: new Set(),
+    busy: new Set(),
+    errors: {},
+  },
 };

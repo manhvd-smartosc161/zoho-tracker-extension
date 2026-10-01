@@ -22,6 +22,10 @@ function selectedLeaveType() {
   return leaveTypes().find((type) => String(type.id) === String(id)) || null;
 }
 
+export function setupRejectField() {
+  el("reject-reason").value = "";
+}
+
 export function showReasonError(show) {
   el("leave-reason-err").hidden = !show;
   el("leave-reason").classList.toggle("invalid", Boolean(show));

@@ -1,6 +1,6 @@
 import { ATTENDANCE_REQUEST_QUOTA } from "../../shared/config.js";
 import { el } from "../dom.js";
-import { setupLeaveForm, setupShiftFields } from "./forms.js";
+import { setupLeaveForm, setupRejectField, setupShiftFields } from "./forms.js";
 import { showToast } from "./toast.js";
 
 const ERROR_HINTS = {
@@ -23,6 +23,27 @@ function describeError(res) {
   return text || "Không gửi được — thử lại sau.";
 }
 
+const POPUP_MAX_HEIGHT = 600;
+const DIALOG_GAP = 32;
+
+let sizeWatcher = null;
+
+function holdPopupHeight(dialog) {
+  releasePopupHeight();
+  const fit = () => {
+    document.body.style.minHeight = `${Math.min(POPUP_MAX_HEIGHT, dialog.offsetHeight + DIALOG_GAP)}px`;
+  };
+  sizeWatcher = new ResizeObserver(fit);
+  sizeWatcher.observe(dialog);
+  fit();
+}
+
+function releasePopupHeight() {
+  if (sizeWatcher) sizeWatcher.disconnect();
+  sizeWatcher = null;
+  document.body.style.minHeight = "";
+}
+
 export function askConfirm({
   title,
   message,
@@ -32,6 +53,7 @@ export function askConfirm({
   successText,
   fields,
   leaveFields,
+  reasonField,
   returnKey,
   notice,
   onConfirm,
@@ -52,6 +74,9 @@ export function askConfirm({
   el("leave-fields").hidden = !leaveFields;
   if (leaveFields) setupLeaveForm(leaveFields);
 
+  el("reject-fields").hidden = !reasonField;
+  if (reasonField) setupRejectField();
+
   yes.textContent = confirmText || "";
   yes.hidden = Boolean(notice);
   no.textContent = cancelText || "Đóng";
@@ -61,6 +86,7 @@ export function askConfirm({
   no.disabled = false;
   err.hidden = true;
   if (!dialog.open) dialog.showModal();
+  holdPopupHeight(dialog);
 
   function restoreFocus() {
     const target =
@@ -72,6 +98,7 @@ export function askConfirm({
   function close() {
     dialog.onclose = null;
     if (dialog.open) dialog.close();
+    releasePopupHeight();
     yes.onclick = null;
     no.onclick = null;
     dialog.onclick = null;

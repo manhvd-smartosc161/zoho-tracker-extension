@@ -2,8 +2,10 @@ import { el } from "./dom.js";
 import { state } from "./state.js";
 import { render, requestUpdate } from "./sync.js";
 import { bindToast } from "./ui/toast.js";
-import { renderCalendar, toggleCalendar } from "./views/calendar.js";
+import { loadApprovals } from "./views/approvals.js";
+import { renderCalendar } from "./views/calendar.js";
 import { bindRows } from "./views/cycle-board.js";
+import { showView } from "./views/router.js";
 
 function shiftOffset(key, delta, min, max) {
   state[key] = Math.min(max, Math.max(min, state[key] + delta));
@@ -14,6 +16,7 @@ bindToast();
 
 render();
 requestUpdate();
+loadApprovals();
 
 const lockRetry = el("lock-retry");
 lockRetry.addEventListener("click", function () {
@@ -26,9 +29,15 @@ lockRetry.addEventListener("click", function () {
   });
 });
 
-el("refreshBtn").addEventListener("click", () => requestUpdate());
+el("refreshBtn").addEventListener("click", () => {
+  requestUpdate();
+  loadApprovals();
+});
 
-el("calendarBtn").addEventListener("click", () => toggleCalendar(el("calendar-view").hidden));
+el("homeBtn").addEventListener("click", () => showView("overview"));
+el("homeLogo").addEventListener("click", () => showView("overview"));
+el("calendarBtn").addEventListener("click", () => showView("calendar"));
+el("approvalsBtn").addEventListener("click", () => showView("approvals"));
 
 el("cal-prev").addEventListener("click", () => {
   shiftOffset("calOffset", -1, -2, 1);
