@@ -12,6 +12,7 @@ import { el } from "../dom.js";
 import { formatCountdown, formatDate, formatDuration, formatTime } from "../format.js";
 
 const SIX_HOURS_MS = 6 * 3600 * 1000;
+const OVER_SIX_HOURS_MS = SIX_HOURS_MS + 60 * 1000;
 const EIGHT_HOURS_MS = 8 * 3600 * 1000;
 
 function atTime(date, { hour, minute }) {
@@ -103,7 +104,7 @@ export function renderToday(entries) {
   // Số giờ LÀM còn thiếu, không tính nghỉ trưa
   el("checkout1-left").textContent = done6
     ? "đã đủ"
-    : `còn ${formatCountdown(SIX_HOURS_MS - worked)}`;
+    : `còn ${formatCountdown(OVER_SIX_HOURS_MS - worked)}`;
   el("fulltime-left").textContent = done8
     ? "đã đủ"
     : `còn ${formatCountdown(EIGHT_HOURS_MS - worked)}`;
@@ -122,7 +123,7 @@ export function renderToday(entries) {
     el("progress-hint").textContent = `Còn ${formatCountdown(EIGHT_HOURS_MS - worked)} nữa là đủ 8 tiếng`;
   } else {
     setStatus("Đang trong ca", true);
-    el("progress-hint").textContent = `Còn ${formatCountdown(SIX_HOURS_MS - worked)} nữa là đủ 6 tiếng`;
+    el("progress-hint").textContent = `Còn ${formatCountdown(OVER_SIX_HOURS_MS - worked)} nữa là đủ 6 tiếng`;
   }
 
   el("late-note").hidden = mark8 < atTime(now, LATE_AFTER);

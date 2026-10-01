@@ -9,6 +9,17 @@ export function countsAgainstQuota(request) {
   return request.status !== "cancelled" && request.status !== "rejected";
 }
 
+const FULL_MINUTES = 8 * 60;
+const MID_MINUTES = 6 * 60;
+
+export function workBand(tsecs) {
+  const minutes = Math.floor((tsecs || 0) / 60);
+  if (minutes >= FULL_MINUTES) return "full";
+  if (minutes > MID_MINUTES) return "mid";
+  if ((tsecs || 0) > 0) return "low";
+  return "";
+}
+
 export function quotaTone(used, quota) {
   if (used >= quota) return "limit";
   if (used >= quota - 1) return "warn";

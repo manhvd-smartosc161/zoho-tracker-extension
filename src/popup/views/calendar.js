@@ -2,12 +2,9 @@ import { dateKeyOf, getCycle, lastDayOf } from "../../shared/dates.js";
 import { el } from "../dom.js";
 import { confirmCancel, confirmCreate } from "../flows.js";
 import { formatDayLabel, formatHours, formatRange } from "../format.js";
-import { requestSeconds } from "../quota.js";
+import { requestSeconds, workBand } from "../quota.js";
 import { state } from "../state.js";
 import { closeCellMenu, openCellMenu } from "../ui/cell-menu.js";
-
-const FULL_SECS = 8 * 3600;
-const MID_SECS = 6 * 3600;
 
 const REQ_LABELS = {
   pending: { text: "Chờ", cls: "r-pending" },
@@ -16,10 +13,8 @@ const REQ_LABELS = {
 };
 
 function hoursTone(tsecs) {
-  if (tsecs >= FULL_SECS) return "h-full";
-  if (tsecs >= MID_SECS) return "h-mid";
-  if (tsecs > 0) return "h-low";
-  return "";
+  const band = workBand(tsecs);
+  return band ? `h-${band}` : "";
 }
 
 function calCell(className, parts, tag) {
@@ -96,14 +91,9 @@ function buildDayCell(date, day, today, totals) {
   } else if (tsecs > 0) {
     parts.push(calLine("hrs", formatHours(tsecs)));
     classes.push(hoursTone(tsecs));
-    if (tsecs >= FULL_SECS) totals.full++;
-    else if (tsecs >= MID_SECS) {
-      totals.mid++;
-      shortDay = true;
-    } else {
-      totals.low++;
-      shortDay = true;
-    }
+    const band = workBand(tsecs);
+    totals[band]++;
+    shortDay = band !== "full";
   } else if (day && day.leaveDaysTaken) {
     parts.push(calLine("mark m-leave", day.leaveDaysTaken === 0.5 ? "Leave ½" : "Leave"));
   } else if (leaveReq && !weekend) {
@@ -119,9 +109,7 @@ function buildDayCell(date, day, today, totals) {
   if (leaveReq) shortDay = false;
 
   if (pendingSecs > 0) {
-    if (pendingSecs >= FULL_SECS) totals.full++;
-    else if (pendingSecs >= MID_SECS) totals.mid++;
-    else totals.low++;
+    totals[workBand(pendingSecs)]++;
   }
 
   const label = formatDayLabel(date);
@@ -130,7 +118,7 @@ function buildDayCell(date, day, today, totals) {
   if (request) {
     const info = REQ_LABELS[request.status];
     if (info) parts.push(calLine(`req ${info.cls}`, info.text));
-    if (request.status === "approved" && tsecs >= FULL_SECS) classes.push("is-approved");
+    if (request.status === "approved" && workBand(tsecs) === "full") classes.push("is-approved");
   }
 
   // Đơn đã huỷ hoặc bị từ chối không chặn việc tạo lại

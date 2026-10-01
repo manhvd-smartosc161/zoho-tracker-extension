@@ -1,8 +1,9 @@
-const HOUR_MS = 60 * 60 * 1000;
+const MINUTE_MS = 60 * 1000;
+const HOUR_MS = 60 * MINUTE_MS;
 
 export const LUNCH_BREAK_MS = 1.25 * HOUR_MS;
 export const LUNCH_START_HOUR = 12;
-export const CHECKOUT_6H_OFFSET_MS = 7.25 * HOUR_MS;
+export const CHECKOUT_6H_OFFSET_MS = 7.25 * HOUR_MS + MINUTE_MS;
 export const CHECKOUT_8H_OFFSET_MS = 9.25 * HOUR_MS;
 
 export const WORK_START = { hour: 7, minute: 30 };

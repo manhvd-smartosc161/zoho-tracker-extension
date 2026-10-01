@@ -23,7 +23,7 @@ export function formatDuration(ms) {
 }
 
 export function formatHours(tsecs) {
-  const minutes = Math.round(tsecs / 60);
+  const minutes = Math.floor(tsecs / 60);
   return `${Math.floor(minutes / 60)}h${pad(minutes % 60)}`;
 }
 

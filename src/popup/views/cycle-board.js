@@ -2,7 +2,7 @@ import { ATTENDANCE_REQUEST_QUOTA, DAYS_6_TO_8_LIMIT } from "../../shared/config
 import { fromDateKey, getCycle, lastDayOf } from "../../shared/dates.js";
 import { el } from "../dom.js";
 import { formatDayLabel, formatHours, formatRange } from "../format.js";
-import { countsAgainstQuota, quotaTone } from "../quota.js";
+import { countsAgainstQuota, quotaTone, workBand } from "../quota.js";
 import { state } from "../state.js";
 
 const ROWS = ["below-6", "below-8", "missing-request", "sent-request", "leave-request"];
@@ -152,14 +152,15 @@ export function renderCycleStats(dayList) {
     const status = (day.status || "").trim();
 
     if (tsecs > 0 && !isToday) {
-      if (tsecs < 6 * 3600) {
+      const band = workBand(tsecs);
+      if (band === "low") {
         below6.push({
           date,
           label: formatHours(tsecs),
           percent: (tsecs / (6 * 3600)) * 100,
           low: true,
         });
-      } else if (tsecs < 8 * 3600) {
+      } else if (band === "mid") {
         between6And8.push({
           date,
           label: formatHours(tsecs),
