@@ -35,6 +35,7 @@ el("refreshBtn").addEventListener("click", () => {
 });
 
 el("homeBtn").addEventListener("click", () => showView("overview"));
+el("backBtn").addEventListener("click", () => showView("overview"));
 el("homeLogo").addEventListener("click", () => showView("overview"));
 el("calendarBtn").addEventListener("click", () => showView("calendar"));
 el("approvalsBtn").addEventListener("click", () => showView("approvals"));

@@ -66,6 +66,7 @@ header h1 {
   color: var(--green);
 }
 
+#backBtn,
 #calendarBtn,
 #approvalsBtn {
   position: relative;
@@ -85,12 +86,14 @@ header h1 {
   appearance: none;
 }
 
+#backBtn svg,
 #calendarBtn svg,
 #approvalsBtn svg {
   width: 16px;
   height: 16px;
 }
 
+#backBtn:hover,
 #calendarBtn:hover,
 #calendarBtn[aria-pressed="true"],
 #approvalsBtn:hover,

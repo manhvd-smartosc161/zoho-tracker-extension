@@ -21,6 +21,7 @@ export function showView(name) {
   Object.entries(BUTTONS).forEach(([view, id]) => {
     el(id).setAttribute("aria-pressed", String(view === name));
   });
+  el("backBtn").hidden = name === "overview";
 
   if (name === "calendar") renderCalendar();
   if (name === "approvals") {
