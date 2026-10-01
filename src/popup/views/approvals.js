@@ -1,4 +1,5 @@
-import { approveRequest, fetchApprovals, fetchPhoto, rejectRequest } from "../api.js";
+import { approveRequest, fetchApprovals, fetchLeaveApplications, fetchPhoto, rejectRequest } from "../api.js";
+import { parseZohoDate } from "../../shared/dates.js";
 import { parseApprovals } from "../approvals.js";
 import { el } from "../dom.js";
 import { formatDate } from "../format.js";
@@ -37,6 +38,14 @@ function dateSpan(item) {
   }
   if (item.from) return formatDate(item.from);
   return "";
+}
+
+function durationLabel(item) {
+  if (!item.days) return "";
+  if (item.days === 0.5) return item.session === 2 ? "Nửa cuối" : item.session === 1 ? "Nửa đầu" : "Nửa ngày";
+  if (item.days === 0.25) return item.session ? `1/4 ngày (phần ${item.session})` : "1/4 ngày";
+  if (item.days === 1) return "Cả ngày";
+  return `${item.days} ngày`;
 }
 
 function describe(item) {
@@ -228,7 +237,11 @@ function renderItem(item) {
   const tag = node("span", `appr-tag t-${item.category}`, TAG_LABELS[item.category] || item.type);
   tag.title = item.type;
   meta.appendChild(tag);
-  const detailText = [dateSpan(item), item.raisedOn ? `gửi ${formatDate(item.raisedOn)}` : ""]
+  const detailText = [
+    dateSpan(item),
+    item.category === "leave" ? durationLabel(item) : "",
+    item.raisedOn ? `gửi ${formatDate(item.raisedOn)}` : "",
+  ]
     .filter(Boolean)
     .join(" · ");
   if (detailText) {
@@ -306,6 +319,44 @@ export function renderApprovals() {
   body.appendChild(list);
 }
 
+const LOOKBACK_DAYS = 120;
+const LOOKAHEAD_DAYS = 240;
+
+function shiftDays(days) {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + days);
+  return date;
+}
+
+function rowHasId(row, id) {
+  return Object.values(row || {}).some((value) => String(value) === id);
+}
+
+async function fillLeaveDates(items) {
+  const leaves = items.filter((item) => item.category === "leave" && item.ownerErecno && !item.from);
+  if (leaves.length === 0) return;
+
+  const owners = [...new Set(leaves.map((item) => item.ownerErecno))];
+  try {
+    const rows = await fetchLeaveApplications(owners, shiftDays(-LOOKBACK_DAYS), shiftDays(LOOKAHEAD_DAYS));
+    console.info(`[approvals] leave applications (${rows.length}):\n` + JSON.stringify(rows.slice(0, 5), null, 2));
+    let filled = 0;
+    leaves.forEach((item) => {
+      const row = rows.find((candidate) => rowHasId(candidate, item.recordId));
+      if (!row) return;
+      item.from = parseZohoDate(row.from) || item.from;
+      item.to = parseZohoDate(row.to) || item.from;
+      item.days = Number(row.leavetaken) || item.days;
+      filled++;
+    });
+    console.info(`[approvals] ghép được ngày nghỉ cho ${filled}/${leaves.length} đơn`);
+    if (filled > 0) renderApprovals();
+  } catch (error) {
+    console.warn("[approvals] không lấy được ngày nghỉ:", error.message);
+  }
+}
+
 export async function loadApprovals() {
   if (state.approvals.busy.size > 0) return;
   state.approvals.status = "loading";
@@ -315,9 +366,9 @@ export async function loadApprovals() {
     const data = await fetchApprovals();
     console.info("[approvals] response", data);
     const parsed = parseApprovals(data);
-    if (parsed[0]) {
-      console.info("[approvals] first item JSON:\n" + JSON.stringify(parsed[0].raw, null, 2));
-    }
+    parsed.forEach((item) => {
+      console.info(`[approvals] ${item.type} JSON:\n` + JSON.stringify(item.raw, null, 2));
+    });
     state.approvals.items = parsed.sort(
       (a, b) => (b.raisedOn ? b.raisedOn.getTime() : 0) - (a.raisedOn ? a.raisedOn.getTime() : 0)
     );
@@ -328,6 +379,7 @@ export async function loadApprovals() {
     state.approvals.errors = {};
     state.approvals.status = "ready";
     state.approvals.error = "";
+    fillLeaveDates(state.approvals.items);
   } catch (error) {
     console.error("[approvals] lỗi:", error);
     state.approvals.status = "error";

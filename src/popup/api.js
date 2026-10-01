@@ -125,6 +125,31 @@ export function fetchPhoto(url) {
   return photoCache.get(url);
 }
 
+export async function fetchLeaveApplications(erecnos, from, to) {
+  const { csrfToken } = await readCreds();
+  if (!csrfToken) throw new Error(NOT_LOGGED_IN);
+
+  const data = await postZoho(
+    "leave_view_actions.zp",
+    new URLSearchParams({
+      key: "applications_view",
+      viewMode: "1",
+      from: formatZohoDate(from),
+      to: formatZohoDate(to),
+      typeofleave: "-1",
+      employee: JSON.stringify(erecnos.map(String)),
+      conreqcsr: csrfToken,
+      status: "20",
+      sortType: "1",
+      sortBy: "3",
+      sIndx: "1",
+      limit: "100",
+    }),
+    FORM_HEADERS
+  );
+  return (data && data.data) || [];
+}
+
 export async function fetchApprovals() {
   const { csrfToken, erecno } = await readCreds();
   if (!csrfToken) throw new Error(NOT_LOGGED_IN);

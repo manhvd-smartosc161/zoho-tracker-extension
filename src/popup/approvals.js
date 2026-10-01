@@ -2,11 +2,13 @@ import { PORTAL } from "../shared/config.js";
 import { parseZohoDate } from "../shared/dates.js";
 
 const ID_KEYS = ["recordId", "recId", "approvalId", "requestId", "entityId", "id"];
-const REQUESTER_KEYS = ["addedByName", "empName", "employeeName", "ownerName", "raisedBy", "requestedBy", "requester", "name"];
+const REQUESTER_KEYS = ["recordOwnerName", "addedByName", "empName", "employeeName", "ownerName", "raisedBy", "requestedBy", "requester", "name"];
 const TYPE_KEYS = ["formName", "dispName", "formDispName", "approvalFor", "requestType", "moduleName", "title"];
 const RAISED_KEYS = ["raisedOn", "raisedTime", "createdTime", "addedTime", "requestedOn", "date"];
-const FROM_KEYS = ["fromDate", "from", "startDate", "fdate"];
-const TO_KEYS = ["toDate", "to", "endDate", "tdate"];
+const FROM_KEYS = ["fromDate", "from", "leaveFrom", "startDate", "fdate", "originday", "attDate"];
+const TO_KEYS = ["toDate", "to", "leaveTo", "endDate", "tdate"];
+const DAYS_KEYS = ["Daystaken", "daysTaken", "leavetaken", "leaveTaken", "noOfDays", "totalDays", "leaveCount"];
+const ZOHO_DAY = /^\d{1,2}-[A-Z][a-z]{2}-\d{4}$/;
 
 function pick(item, keys) {
   if (!item || typeof item !== "object") return "";
@@ -22,6 +24,39 @@ function pick(item, keys) {
     }
   }
   return "";
+}
+
+function pickDeep(node, keys, depth) {
+  if (!node || typeof node !== "object" || depth > 3) return "";
+  const direct = pick(node, keys);
+  if (direct) return direct;
+  for (const value of Object.values(node)) {
+    const found = pickDeep(value, keys, depth + 1);
+    if (found) return found;
+  }
+  return "";
+}
+
+function daySlots(node, out, depth) {
+  if (!node || typeof node !== "object" || depth > 3) return out;
+  Object.entries(node).forEach(([key, value]) => {
+    if (ZOHO_DAY.test(key)) {
+      let slot = value;
+      if (typeof slot === "string") {
+        try {
+          slot = JSON.parse(slot);
+        } catch {
+          slot = null;
+        }
+      }
+      if (slot && typeof slot === "object" && slot.count !== undefined) {
+        out.push({ date: parseZohoDate(key), count: Number(slot.count), session: Number(slot.session) || 0 });
+      }
+    } else {
+      daySlots(value, out, depth + 1);
+    }
+  });
+  return out;
 }
 
 function collectArrays(node, key, out, depth) {
@@ -97,13 +132,26 @@ function toApproval(row, names, index) {
     category: categorize(`${type} ${pick(row, ["compName", "tableName"])}`),
     type: type || "Request",
     requester: requester.name,
-    requesterCode: requester.code || pick(row, ["empId", "employeeId", "erecno"]),
+    requesterCode: requester.code || pick(row, ["recordOwnerEmpId", "empId", "employeeId"]),
+    ownerErecno: pick(row, ["recordOwnerErecno", "addedByErcno", "erecno"]),
     avatar: avatarUrl(pick(row, ["employeePhotoUrl"]) || findPhotoPath(row, 0)),
     raisedOn: toDate(pick(row, RAISED_KEYS)),
-    from: toDate(pick(row, FROM_KEYS)),
-    to: toDate(pick(row, TO_KEYS)),
+    ...leaveSpan(row),
     raw: row,
   };
+}
+
+function leaveSpan(row) {
+  const slots = daySlots(row, [], 0)
+    .filter((slot) => slot.date)
+    .sort((a, b) => a.date - b.date);
+  const from = slots.length ? slots[0].date : toDate(pickDeep(row, FROM_KEYS, 0));
+  const to = slots.length ? slots[slots.length - 1].date : toDate(pickDeep(row, TO_KEYS, 0));
+  const total = slots.length
+    ? slots.reduce((sum, slot) => sum + slot.count, 0)
+    : Number(pickDeep(row, DAYS_KEYS, 0)) || 0;
+  const session = slots.length === 1 ? slots[0].session : 0;
+  return { from, to, days: total, session };
 }
 
 export function parseApprovals(data) {
