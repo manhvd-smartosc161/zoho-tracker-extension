@@ -183,10 +183,11 @@ export async function createLeave(dateKey, leaveTypeId, duration, reason) {
   if (!leaveTypeId) throw new Error("Chọn loại phép để gửi đơn.");
 
   const spec = leaveDuration(duration);
-  if (spec.value !== duration) {
-    throw new Error("Thời lượng này chưa hỗ trợ — tạo đơn nửa ngày hoặc 1/4 ngày trực tiếp trên people.zoho.com.");
-  }
   const zohoDate = toZohoDate(dateKey);
+  const dayEntry =
+    spec.days === 1
+      ? { count: 1, session: 0 }
+      : { count: String(spec.days), session: String(spec.session), inactive: false };
 
   const body = new URLSearchParams({
     isPicklistIdEnabled: "true",
@@ -200,7 +201,7 @@ export async function createLeave(dateKey, leaveTypeId, duration, reason) {
     conreqcsr: csrfToken,
     zp_formId: LEAVE_FORM_ID,
     zp_mode: "addRecord",
-    [zohoDate]: JSON.stringify({ count: 1, session: spec.session }),
+    [zohoDate]: JSON.stringify(dayEntry),
     isHour: "false",
     isDayBased: "true",
     Daystaken: String(spec.days),

@@ -19,17 +19,15 @@ export const SHORT_WEEKDAYS = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 export const LEAVE_FORM_ID = "412762000000035693";
 export const LEAVE_TABLE = "P_EmployeeLeave";
 
-const ALL_LEAVE_DURATIONS = [
-  { value: "full", text: "Cả ngày", days: 1, session: 0, verified: true },
+export const LEAVE_DURATIONS = [
+  { value: "full", text: "Cả ngày", days: 1, session: 0 },
   { value: "half1", text: "Nửa đầu (1st Half)", days: 0.5, session: 1 },
   { value: "half2", text: "Nửa cuối (2nd Half)", days: 0.5, session: 2 },
-  { value: "q1", text: "1/4 ngày (1st Quarter)", days: 0.25, session: 3 },
-  { value: "q2", text: "1/4 ngày (2nd Quarter)", days: 0.25, session: 4 },
-  { value: "q3", text: "1/4 ngày (3rd Quarter)", days: 0.25, session: 5 },
-  { value: "q4", text: "1/4 ngày (4th Quarter)", days: 0.25, session: 6 },
+  { value: "q1", text: "1/4 ngày (1st Quarter)", days: 0.25, session: 1 },
+  { value: "q2", text: "1/4 ngày (2nd Quarter)", days: 0.25, session: 2 },
+  { value: "q3", text: "1/4 ngày (3rd Quarter)", days: 0.25, session: 3 },
+  { value: "q4", text: "1/4 ngày (4th Quarter)", days: 0.25, session: 4 },
 ];
-
-export const LEAVE_DURATIONS = ALL_LEAVE_DURATIONS.filter((d) => d.verified);
 
 export function leaveDuration(value) {
   return LEAVE_DURATIONS.find((d) => d.value === value) || LEAVE_DURATIONS[0];

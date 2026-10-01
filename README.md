@@ -112,7 +112,7 @@ Bấm vào ô ngày để tạo đơn — không cần mở Zoho.
 
 **Ngày thiếu giờ** (số giờ cam hoặc đỏ) và **ngày vắng**: bấm vào hiện menu hai lựa chọn.
 
-- **Request Leave** — xin nghỉ phép. Chọn loại phép (kèm số ngày còn lại), nhập lý do (bắt buộc). Hiện chỉ tạo được đơn **cả ngày** — đơn nửa ngày hoặc 1/4 ngày tạm thời làm trực tiếp trên Zoho.
+- **Request Leave** — xin nghỉ phép. Chọn loại phép (kèm số ngày còn lại), thời lượng (cả ngày, nửa đầu, nửa cuối, hoặc một trong bốn phần tư ngày) và nhập lý do. Lý do bắt buộc.
 - **Request Attendance** — đơn chấm công. Giờ vào và giờ ra mặc định **09:00 – 18:30**, sửa được cả hai trước khi gửi.
 
 Gửi xong ô đổi trạng thái ngay, không cần tải lại. Một thông báo nhỏ hiện lên dưới đáy popup xác nhận.
