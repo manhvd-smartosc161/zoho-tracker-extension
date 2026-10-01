@@ -17,23 +17,27 @@ const STORAGE_KEYS = [
   "lastUpdated",
 ];
 
-function renderUpdatedStamp(lastUpdated) {
+function renderUpdatedStamp(lastUpdated, fullName) {
   const stamp = lastUpdated ? formatTime(new Date(lastUpdated)) : "";
   const updated = el("last-updated");
+  const name = String(fullName || "").trim();
   updated.classList.toggle("err", state.lastSyncFailed);
-  updated.textContent = state.lastSyncFailed
-    ? `Cập nhật lỗi${stamp ? ` · dữ liệu lúc ${stamp}` : ""}`
-    : stamp
-      ? `Cập nhật ${stamp}`
-      : "";
+  updated.title = fullName || "";
+  if (state.lastSyncFailed) {
+    updated.textContent = `Cập nhật lỗi${stamp ? ` · dữ liệu lúc ${stamp}` : ""}`;
+    return;
+  }
+  updated.textContent = [name ? `Chào ${name}` : "", stamp ? `Cập nhật ${stamp}` : ""]
+    .filter(Boolean)
+    .join(" · ");
 }
 
 export function render() {
   chrome.storage.local.get(STORAGE_KEYS, function (data) {
     if (renderLock(data.syncError)) return;
-    renderUpdatedStamp(data.lastUpdated);
-
     const attendance = data.attendanceData;
+    renderUpdatedStamp(data.lastUpdated, attendance && attendance.userDetails && attendance.userDetails.fName);
+
     state.dayList = (attendance && attendance.dayList) || {};
     state.requests = mergeRequests(data.requestData, state.dayList);
     state.leaveTypes = data.leaveData || [];

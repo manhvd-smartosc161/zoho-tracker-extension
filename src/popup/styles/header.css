@@ -35,6 +35,9 @@ header .updated {
   margin-top: 1px;
   font-size: 11px;
   color: var(--soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 header .updated.err {
