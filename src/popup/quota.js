@@ -47,7 +47,7 @@ export function mergeRequests(requests, dayList) {
   );
   Object.values(dayList || {}).forEach((day) => {
     const info = day.approvalInfo;
-    if (!info || info.isRegularized === false) return;
+    if (!info) return;
     const date = parseZohoDate(info.originday) || new Date(day.orgdate);
     if (!date || isNaN(date.getTime())) return;
     const key = dateKeyOf(date);
