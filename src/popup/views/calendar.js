@@ -1,4 +1,5 @@
-import { dateKeyOf, getCycle, lastDayOf } from "../../shared/dates.js";
+import { dateKeyOf, getCycle, lastDayOf, pad } from "../../shared/dates.js";
+import { STANDARD_IN_MIN, STANDARD_OUT_MIN } from "../config.js";
 import { el } from "../dom.js";
 import { confirmCancel, confirmLeave } from "../flows.js";
 import { formatDayLabel, formatHours, formatRange } from "../format.js";
@@ -52,6 +53,115 @@ function indexDays(dayList) {
   return index;
 }
 
+const CLOCK = /^\d{1,2}:\d{2}$/;
+
+function punchOf(day) {
+  const filo = (day && day.filo) || {};
+  const checkin = String(filo.ftime || "").trim();
+  if (!CLOCK.test(checkin)) return null;
+  const checkout = String(filo.ttime || "").trim();
+  return { in: checkin, out: CLOCK.test(checkout) && checkout !== checkin ? checkout : "" };
+}
+
+const DETAIL_FROM_MIN = 7 * 60;
+const DETAIL_SPAN_MIN = 13 * 60;
+
+function clockMinutes(text) {
+  const [h, m] = text.split(":").map(Number);
+  return h * 60 + m;
+}
+
+function percentIn(minutes, from, span) {
+  return Math.min(100, Math.max(0, ((minutes - from) / span) * 100));
+}
+
+function presence(punch, live) {
+  const now = new Date();
+  const start = clockMinutes(punch.in);
+  const end = punch.out
+    ? clockMinutes(punch.out)
+    : live
+      ? now.getHours() * 60 + now.getMinutes()
+      : start;
+  return { start, end: Math.max(start, end) };
+}
+
+function fillSpan(span, range, from, total) {
+  const left = percentIn(range.start, from, total);
+  const right = percentIn(range.end, from, total);
+  span.style.left = `${left}%`;
+  span.style.width = `${Math.max(right - left, 0)}%`;
+}
+
+function spanText(minutes) {
+  if (minutes < 60) return `${minutes} phút`;
+  return `${Math.floor(minutes / 60)}h${pad(minutes % 60)}`;
+}
+
+function inNote(punch) {
+  const diff = clockMinutes(punch.in) - STANDARD_IN_MIN;
+  if (diff > 0) return { text: `trễ ${spanText(diff)}`, tone: "bad" };
+  if (diff < 0) return { text: `sớm ${spanText(-diff)}`, tone: "good" };
+  return { text: "đúng giờ", tone: "good" };
+}
+
+function outNote(punch, live) {
+  if (!punch.out || live) return { text: live ? "đang trong ca" : "chưa quẹt ra", tone: "" };
+  const diff = clockMinutes(punch.out) - STANDARD_OUT_MIN;
+  if (diff < 0) return { text: `về sớm ${spanText(-diff)}`, tone: "bad" };
+  if (diff > 0) return { text: `ở thêm ${spanText(diff)}`, tone: "good" };
+  return { text: "đúng giờ", tone: "good" };
+}
+
+function setNote(id, note) {
+  const node = el(id);
+  node.textContent = note.text;
+  node.className = `cd-note ${note.tone}`;
+}
+
+function showDetail(info) {
+  const box = el("cal-detail");
+  box.hidden = !info;
+  document.querySelectorAll(".cal-day.is-peek").forEach((node) => node.classList.remove("is-peek"));
+  if (!info) return;
+  info.cell.classList.add("is-peek");
+  el("cd-day").textContent = info.label;
+  el("cd-total").textContent = info.hours;
+  el("cd-total").className = `cd-total ${info.tone}`;
+  el("cd-in").textContent = info.punch.in;
+  el("cd-out").textContent = info.punch.out || "--:--";
+  setNote("cd-in-note", inNote(info.punch));
+  setNote("cd-out-note", outNote(info.punch, info.live));
+  const span = el("cd-span");
+  fillSpan(span, presence(info.punch, info.live), DETAIL_FROM_MIN, DETAIL_SPAN_MIN);
+  span.classList.toggle("live", info.live);
+}
+
+function punchText(punch) {
+  return `vào ${punch.in}, ra ${punch.out || "chưa có"}`;
+}
+
+const detail = { latest: null };
+
+function bindDetail(cell, info) {
+  info.cell = cell;
+  const show = () => showDetail(info);
+  cell.addEventListener("mouseenter", show);
+  cell.addEventListener("focus", show);
+  if (cell.tagName !== "BUTTON") cell.tabIndex = 0;
+  detail.latest = info;
+}
+
+function placeStandard() {
+  const left = percentIn(STANDARD_IN_MIN, DETAIL_FROM_MIN, DETAIL_SPAN_MIN);
+  const right = percentIn(STANDARD_OUT_MIN, DETAIL_FROM_MIN, DETAIL_SPAN_MIN);
+  const band = el("cd-standard");
+  band.style.left = `${left}%`;
+  band.style.width = `${right - left}%`;
+  el("cd-mark-in").style.left = `${left}%`;
+  el("cd-mark-out").style.left = `${right}%`;
+}
+
 function pickRequest(key) {
   const sameDay = state.requests.filter((r) => r.date === key);
   return (
@@ -80,6 +190,7 @@ function renderSummary(totals) {
 }
 
 function buildDayCell(date, day, today, totals) {
+  const punch = punchOf(day);
   const key = dateKeyOf(date);
   const tsecs = (day && day.tsecs) || 0;
   const weekend = date.getDay() === 0 || date.getDay() === 6;
@@ -160,7 +271,18 @@ function buildDayCell(date, day, today, totals) {
   cell.dataset.key = key;
   const summary = [label]
     .concat(parts.slice(1).filter(Boolean).map((p) => p.textContent))
+    .concat(tsecs > 0 && punch ? [punchText(punch)] : [])
     .join(", ");
+
+  if (tsecs > 0 && punch) {
+    bindDetail(cell, {
+      label,
+      punch,
+      live: isToday,
+      hours: formatHours(tsecs),
+      tone: isToday ? "" : hoursTone(tsecs),
+    });
+  }
 
   if (cancellable) {
     cell.type = "button";
@@ -199,6 +321,7 @@ export function renderCalendar() {
   el("cal-month").textContent = formatRange(cycle);
 
   const index = indexDays(state.dayList);
+  detail.latest = null;
   const container = el("cal-days");
   container.textContent = "";
 
@@ -227,6 +350,11 @@ export function renderCalendar() {
   }
 
   renderSummary(totals);
+
+  const latest = detail.latest;
+  placeStandard();
+  showDetail(latest);
+  container.onmouseleave = () => showDetail(latest);
 
   el("cal-next").disabled = state.calOffset >= 1;
   el("cal-prev").disabled = state.calOffset <= -2;

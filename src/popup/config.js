@@ -10,6 +10,9 @@ export const WORK_START = { hour: 7, minute: 30 };
 export const WORK_END = { hour: 19, minute: 30 };
 export const LATE_AFTER = { hour: 19, minute: 30 };
 
+export const STANDARD_IN_MIN = 9 * 60;
+export const STANDARD_OUT_MIN = 18 * 60 + 15;
+
 export const SHIFT_FROM = 9 * 60;
 export const SHIFT_TO = 18 * 60 + 30;
 
