@@ -10,10 +10,34 @@ const NO_ERECNO = "Chưa có mã nhân viên — mở people.zoho.com một lầ
 
 const toZohoDate = (dateKey) => formatZohoDate(fromDateKey(dateKey));
 
-function readCreds() {
-  return new Promise((resolve) =>
-    chrome.storage.local.get(["csrfToken", "erecno", "zuid"], resolve)
-  );
+async function freshCsrfToken() {
+  try {
+    const cookie =
+      (await chrome.cookies.get({ url: "https://people.zoho.com/", name: "CSRF_TOKEN" })) ||
+      (await chrome.cookies.get({ url: "https://people.zoho.com/", name: "CT_CSRF_TOKEN" }));
+    return cookie ? cookie.value : "";
+  } catch {
+    return "";
+  }
+}
+
+async function readCreds() {
+  const creds = await chrome.storage.local.get(["csrfToken", "erecno", "zuid"]);
+  const fresh = await freshCsrfToken();
+  if (fresh && fresh !== creds.csrfToken) {
+    await chrome.storage.local.set({ csrfToken: fresh });
+    creds.csrfToken = fresh;
+  }
+  return creds;
+}
+
+function zohoReason(text) {
+  try {
+    const data = JSON.parse(text);
+    return String(data.message || data.errorMessage || data.error || data.msg || "").trim();
+  } catch {
+    return "";
+  }
 }
 
 async function postZoho(path, body, headers) {
@@ -32,7 +56,15 @@ async function postZoho(path, body, headers) {
   if (res.redirected && /accounts\.zoho\.com|signin/.test(res.url)) {
     throw new Error("Phiên đăng nhập hết hạn — đăng nhập lại Zoho.");
   }
-  if (!res.ok) throw new Error(`Zoho đang lỗi (HTTP ${res.status}) — thử lại sau ít phút.`);
+  if (!res.ok) {
+    console.warn(`[zoho] ${path} HTTP ${res.status}:`, text.slice(0, 500));
+    const reason = zohoReason(text);
+    if (reason) throw new Error(`Zoho từ chối (HTTP ${res.status}): ${reason}`);
+    if (res.status === 400) {
+      throw new Error("Zoho không nhận yêu cầu (HTTP 400) — mở people.zoho.com để làm mới đăng nhập rồi bấm thử lại.");
+    }
+    throw new Error(`Zoho đang lỗi (HTTP ${res.status}) — thử lại sau ít phút.`);
+  }
 
   let data;
   try {
