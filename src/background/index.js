@@ -1,10 +1,15 @@
 import { fetchZohoAttendance } from "./attendance.js";
 import { fetchLeaveRequests, fetchZohoLeave } from "./leave.js";
 import { fetchZohoRequests } from "./requests.js";
+import { readTabCsrf } from "../shared/zoho-tab.js";
 import { ensureErecno, fetchZohoCSRFToken, saveIdentity, setStatus } from "./session.js";
 
 async function syncAll() {
-  const token = await fetchZohoCSRFToken();
+  let token = await fetchZohoCSRFToken();
+  if (!token) {
+    token = await readTabCsrf();
+    if (token) await chrome.storage.local.set({ csrfToken: token });
+  }
   if (!token) {
     await setStatus("NO_TOKEN");
     return { status: "error", message: "Chưa có CSRF token" };

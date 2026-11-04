@@ -1,6 +1,7 @@
 import { ATTENDANCE_REQUEST_QUOTA, PORTAL } from "../shared/config.js";
 import { dateKeyOf, formatZohoDate, fromDateKey, getCycle, lastDayOf } from "../shared/dates.js";
 import { parseRequests } from "../shared/zoho-parsers.js";
+import { INVALID_CSRF, sendViaTab } from "../shared/zoho-tab.js";
 import { LEAVE_FORM_ID, LEAVE_TABLE, SHIFT_FROM, SHIFT_TO, leaveDuration } from "./config.js";
 import { state } from "./state.js";
 
@@ -40,19 +41,46 @@ function zohoReason(text) {
   }
 }
 
+const ZOHO_ORIGINS = { origins: ["https://people.zoho.com/*"] };
+const NO_SITE_ACCESS =
+  "Extension chưa được phép truy cập people.zoho.com — bấm Thử lại rồi chọn Cho phép.";
+
+export async function ensureZohoAccess() {
+  try {
+    if (await chrome.permissions.contains(ZOHO_ORIGINS)) return true;
+    return await chrome.permissions.request(ZOHO_ORIGINS);
+  } catch {
+    return false;
+  }
+}
+
+async function sendDirect(url, init) {
+  const res = await fetch(url, { ...init, credentials: "include" });
+  return { status: res.status, ok: res.ok, redirected: res.redirected, url: res.url, text: await res.text() };
+}
+
 async function postZoho(path, body, headers) {
-  const res = await fetch(`${PORTAL}/${path}`, {
+  const url = `${PORTAL}/${path}`;
+  const init = {
     method: "POST",
     headers: {
       Accept: "*/*",
       "X-Requested-With": "XMLHttpRequest",
       ...headers,
     },
-    credentials: "include",
-    body,
-  });
+    body: String(body),
+  };
 
-  const text = await res.text();
+  let res = await sendDirect(url, init);
+  if (res.status === 400 && INVALID_CSRF.test(res.text)) {
+    const granted = await chrome.permissions.contains(ZOHO_ORIGINS);
+    console.info(`[zoho] ${path}: INVALID_CSRF_TOKEN, quyền truy cập people.zoho.com: ${granted}`);
+    if (!granted) throw new Error(NO_SITE_ACCESS);
+    res = await sendViaTab(url, init);
+    console.info(`[zoho] ${path} qua tab Zoho: HTTP ${res.status}`);
+  }
+
+  const text = res.text;
   if (res.redirected && /accounts\.zoho\.com|signin/.test(res.url)) {
     throw new Error("Phiên đăng nhập hết hạn — đăng nhập lại Zoho.");
   }

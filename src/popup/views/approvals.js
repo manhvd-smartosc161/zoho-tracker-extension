@@ -1,4 +1,4 @@
-import { approveRequest, fetchApprovals, fetchLeaveApplications, fetchPhoto, rejectRequest } from "../api.js";
+import { approveRequest, ensureZohoAccess, fetchApprovals, fetchLeaveApplications, fetchPhoto, rejectRequest } from "../api.js";
 import { parseZohoDate } from "../../shared/dates.js";
 import { parseApprovals } from "../approvals.js";
 import { el } from "../dom.js";
@@ -284,7 +284,10 @@ function renderMessage(text, retry) {
   if (retry) {
     const button = node("button", "appr-retry", "Thử lại");
     button.type = "button";
-    button.addEventListener("click", () => loadApprovals());
+    button.addEventListener("click", async () => {
+      await ensureZohoAccess();
+      loadApprovals();
+    });
     box.appendChild(button);
   }
   return box;

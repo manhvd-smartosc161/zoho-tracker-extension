@@ -1,4 +1,5 @@
 import { PORTAL } from "../shared/config.js";
+import { INVALID_CSRF, sendViaTab } from "../shared/zoho-tab.js";
 
 // Zoho trả 200 kèm HTML đăng nhập khi session hết hạn -> phải tự nhận biết
 function assertJsonResponse(text, status) {
@@ -23,27 +24,37 @@ function assertJsonResponse(text, status) {
 }
 
 export async function postZoho(path, params) {
-  const response = await fetch(`${PORTAL}/${path}`, {
+  const url = `${PORTAL}/${path}`;
+  const init = {
     method: "POST",
     headers: {
       Accept: "*/*",
       "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
       "X-Requested-With": "XMLHttpRequest",
-      Referer: `${PORTAL}/zp`,
     },
-    credentials: "include",
-    redirect: "follow",
-    body: new URLSearchParams(params),
-  });
+    body: new URLSearchParams(params).toString(),
+  };
+
+  const response = await fetch(url, { ...init, credentials: "include", redirect: "follow" });
+  let res = { status: response.status, redirected: response.redirected, url: response.url, text: await response.text() };
+
+  if (res.status === 400 && INVALID_CSRF.test(res.text)) {
+    console.info(`[zoho] ${path}: INVALID_CSRF_TOKEN, gửi lại qua tab Zoho`);
+    res = await sendViaTab(url, init);
+  }
 
   // Bị đá sang trang đăng nhập -> session hết hạn
-  if (response.redirected && /accounts\.zoho\.com|signin/.test(response.url)) {
+  if (res.redirected && /accounts\.zoho\.com|signin/.test(res.url)) {
     throw Object.assign(new Error("Zoho chuyển hướng sang trang đăng nhập"), {
       kind: "SESSION_EXPIRED",
     });
   }
 
-  return assertJsonResponse(await response.text(), response.status);
+  if (INVALID_CSRF.test(res.text)) {
+    throw Object.assign(new Error("Zoho từ chối mã CSRF"), { kind: "SESSION_EXPIRED", detail: res.text.slice(0, 120) });
+  }
+
+  return assertJsonResponse(res.text, res.status);
 }
 
 export async function readCredentials(keys) {
