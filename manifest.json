@@ -3,6 +3,15 @@
   "name": "Zoho Track",
   "version": "1.0",
   "description": "Theo dõi chấm công, nghỉ phép và request trên Zoho People",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "zoho-track@extension",
+      "strict_min_version": "128.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  },
   "permissions": [
     "storage",
     "cookies",
@@ -15,6 +24,9 @@
   ],
   "background": {
     "service_worker": "src/background/index.js",
+    "scripts": [
+      "src/background/index.js"
+    ],
     "type": "module"
   },
   "action": {
